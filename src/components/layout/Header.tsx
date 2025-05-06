@@ -10,7 +10,7 @@ const Header = () => {
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <CodeXml className="h-6 w-6 text-primary" />
           <span className="font-bold sm:inline-block text-lg">
-            Persona Canvas
+            JMR
           </span>
         </Link>
         <nav className="flex flex-1 items-center space-x-2 sm:justify-end">

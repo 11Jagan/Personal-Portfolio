@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Persona Canvas - Personal Portfolio',
-  description: 'Showcase your skills and projects with Persona Canvas.',
+  title: 'JMR - Personal Portfolio',
+  description: "Showcase your skills and projects with JMR's personal portfolio.",
 };
 
 export default function RootLayout({

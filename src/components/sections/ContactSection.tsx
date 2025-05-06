@@ -140,7 +140,7 @@ const ContactSection = () => {
                 <CardContent className="space-y-4">
                     <div className="flex items-center space-x-3">
                         <Mail className="h-5 w-5 text-primary" />
-                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-primary transition-colors">konthamjaganmohanredy@gmail.com</a>
+                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-accent transition-colors">konthamjaganmohanredy@gmail.com</a>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Smartphone className="h-5 w-5 text-primary" />
@@ -157,14 +157,14 @@ const ContactSection = () => {
                     <CardTitle className="text-xl">Connect With Me</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                     <Button variant="outline" className="w-full justify-start" asChild>
-                        <Link href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer">
-                            <Github className="mr-2 h-5 w-5 text-primary" /> GitHub
+                     <Button variant="outline" className="w-full justify-start hover:border-accent hover:text-accent transition-colors" asChild>
+                        <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
+                            <Github className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> GitHub
                         </Link>
                     </Button>
-                     <Button variant="outline" className="w-full justify-start" asChild>
-                        <Link href="https://linkedin.com/in/yourusername" target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-2 h-5 w-5 text-primary" /> LinkedIn
+                     <Button variant="outline" className="w-full justify-start hover:border-accent hover:text-accent transition-colors" asChild>
+                        <Link href="https://linkedin.com/in/jagan-mohan-reddy-kontham-445250293/" target="_blank" rel="noopener noreferrer">
+                            <Linkedin className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
                         </Link>
                     </Button>
                 </CardContent>
