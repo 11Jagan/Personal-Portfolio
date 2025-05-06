@@ -14,9 +14,9 @@ const IntroductionSection = () => {
           <div className="md:col-span-1 flex flex-col items-center md:items-start">
             <div className="relative w-48 h-48 md:w-64 md:h-64 mb-6 rounded-full overflow-hidden shadow-lg border-4 border-primary/20">
               <Image
-                src="https://picsum.photos/256/256"
+                src="https://picsum.photos/seed/konthamjagan/256/256"
                 alt="Kontham Jagan Mohan Reddy"
-                data-ai-hint="profile picture"
+                data-ai-hint="professional man"
                 layout="fill"
                 objectFit="cover"
                 className="transform transition-transform duration-500 hover:scale-105"
