@@ -1,7 +1,8 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Download, Lightbulb, Users } from 'lucide-react';
+import { Github, Lightbulb, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const IntroductionSection = () => {
@@ -24,9 +25,11 @@ const IntroductionSection = () => {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-center md:text-left mb-2">Kontham Jagan Mohan Reddy</h1>
             <p className="text-xl text-muted-foreground text-center md:text-left mb-4">Full-Stack Developer</p>
-            <Button className="w-full md:w-auto group" >
-              Download CV
-              <Download className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            <Button className="w-full md:w-auto group" asChild>
+              <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
+                View GitHub Profile
+                <Github className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
           </div>
 
