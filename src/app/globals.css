@@ -139,6 +139,22 @@ body {
     }
   }
 
+  .button-hover-effect:hover {
+    border: 2px solid; /* Set border */
+    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+    animation: rotate 4s linear infinite;
+  }
+  .input-focus-effect:focus {
+    border: 2px solid; /* Set border */
+    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+    animation: rotate 4s linear infinite;
+  }
+  .link-hover-effect:hover {
+    border: 2px solid; /* Set border */
+    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+    animation: rotate 4s linear infinite;
+  }
+
 
   .loading-dots span {
     animation: dot-blink 1.4s infinite both;
@@ -167,4 +183,3 @@ body {
     }
   }
 }
-
