@@ -114,7 +114,12 @@ body {
      /* Ensure dark mode also has a vibrant border */
      border-image: conic-gradient(from var(--angle), hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.8)) 1;
    }
-
+  .rotate-border {
+    --rotate-angle: 0deg; /* Define the initial angle */
+    border: 2px solid;
+    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+    animation: rotate 4s linear infinite;
+  }
 
   @property --angle {
     syntax: '<angle>';
@@ -127,6 +132,13 @@ body {
       --angle: 360deg;
     }
   }
+
+    @keyframes rotate {
+    to {
+      --rotate-angle: 360deg; /* Rotate 360 degrees */
+    }
+  }
+
 
   .loading-dots span {
     animation: dot-blink 1.4s infinite both;
@@ -155,3 +167,4 @@ body {
     }
   }
 }
+

@@ -58,7 +58,7 @@ const ProjectShowcaseSection = () => {
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project) => (
-            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group">
+            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 group rotate-border">
               <div className="relative w-full h-56">
                 <Image
                   src={project.imageUrl}

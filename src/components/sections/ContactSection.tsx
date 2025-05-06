@@ -119,8 +119,8 @@ const ContactSection = () => {
                           <FormControl>
                             <Textarea placeholder="Hi Jagan, I'd like to discuss..." rows={5} {...field} />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                            <FormMessage />
+                          </FormItem>
                       )}
                     />
                     <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 group" disabled={form.formState.isSubmitting}>
@@ -177,3 +177,4 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
