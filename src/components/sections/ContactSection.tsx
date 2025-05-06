@@ -77,7 +77,7 @@ const ContactSection = () => {
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="John Doe" {...field} />
+                              <Input placeholder="Kontham Jagan Mohan Reddy" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -90,7 +90,7 @@ const ContactSection = () => {
                           <FormItem>
                             <FormLabel>Email Address</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="john.doe@example.com" {...field} />
+                              <Input type="email" placeholder="konthamjaganmohanredy@gmail.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -117,7 +117,7 @@ const ContactSection = () => {
                         <FormItem>
                           <FormLabel>Your Message</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Hi John, I'd like to discuss..." rows={5} {...field} />
+                            <Textarea placeholder="Hi Jagan, I'd like to discuss..." rows={5} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -140,15 +140,15 @@ const ContactSection = () => {
                 <CardContent className="space-y-4">
                     <div className="flex items-center space-x-3">
                         <Mail className="h-5 w-5 text-primary" />
-                        <a href="mailto:your.email@example.com" className="text-foreground/80 hover:text-primary transition-colors">your.email@example.com</a>
+                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-primary transition-colors">konthamjaganmohanredy@gmail.com</a>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Smartphone className="h-5 w-5 text-primary" />
-                        <span className="text-foreground/80">+1 (555) 123-4567</span>
+                        <span className="text-foreground/80">+91 8050453043</span>
                     </div>
                      <div className="flex items-center space-x-3">
                         <MapPin className="h-5 w-5 text-primary" />
-                        <span className="text-foreground/80">San Francisco, CA</span>
+                        <span className="text-foreground/80">India</span>
                     </div>
                 </CardContent>
             </Card>

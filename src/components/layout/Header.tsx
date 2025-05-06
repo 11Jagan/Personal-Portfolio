@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CodeXml } from 'lucide-react';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 const Header = () => {
   return (
@@ -12,7 +13,7 @@ const Header = () => {
             Persona Canvas
           </span>
         </Link>
-        <nav className="flex flex-1 items-center space-x-4 sm:justify-end">
+        <nav className="flex flex-1 items-center space-x-2 sm:justify-end">
           <Button variant="ghost" asChild>
             <Link href="#introduction">About</Link>
           </Button>
@@ -22,6 +23,7 @@ const Header = () => {
           <Button variant="ghost" asChild>
             <Link href="#contact">Contact</Link>
           </Button>
+          <ThemeToggle />
         </nav>
       </div>
     </header>

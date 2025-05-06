@@ -6,7 +6,7 @@ const Footer = () => {
     <footer className="border-t bg-muted/50 py-8">
       <div className="container mx-auto px-4 text-center text-muted-foreground">
         <div className="flex justify-center space-x-6 mb-4">
-          <Link href="mailto:your.email@example.com" target="_blank" rel="noopener noreferrer" aria-label="Email">
+          <Link href="mailto:konthamjaganmohanredy@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email">
             <Mail className="h-6 w-6 hover:text-primary transition-colors" />
           </Link>
           <Link href="https://github.com/yourusername" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
