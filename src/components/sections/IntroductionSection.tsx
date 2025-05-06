@@ -15,7 +15,7 @@ const IntroductionSection = () => {
           <div className="md:col-span-1 flex flex-col items-center md:items-start">
             <div className="relative w-48 h-48 md:w-64 md:h-64 mb-6 rounded-full overflow-hidden shadow-lg border-4 border-primary/20">
               <Image
-                src="/kontham_jagan_mohan_reddy_new.jpg"
+                src="/me.jpg"
                 alt="Kontham Jagan Mohan Reddy"
                 layout="fill"
                 objectFit="cover"

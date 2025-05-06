@@ -9,7 +9,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm dark:animated-border",
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      "dark:animated-border", // animated-border class is applied in dark mode
       className
     )}
     {...props}
@@ -30,10 +31,10 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement, // Changed from HTMLParagraphElement to HTMLDivElement for consistency with CardDescription
+  React.HTMLAttributes<HTMLHeadingElement> // Changed from HTMLAttributes<HTMLDivElement> to HTMLAttributes<HTMLHeadingElement> for semantic correctness
 >(({ className, ...props }, ref) => (
-  <div
+  <h2 // Changed from div to h2 for semantic correctness
     ref={ref}
     className={cn(
       "text-2xl font-semibold leading-none tracking-tight",
@@ -45,10 +46,10 @@ const CardTitle = React.forwardRef<
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLParagraphElement, // Changed from HTMLDivElement to HTMLParagraphElement for semantic correctness
+  React.HTMLAttributes<HTMLParagraphElement> // Changed from HTMLAttributes<HTMLDivElement> to HTMLAttributes<HTMLParagraphElement> for semantic correctness
 >(({ className, ...props }, ref) => (
-  <div
+  <p // Changed from div to p for semantic correctness
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
