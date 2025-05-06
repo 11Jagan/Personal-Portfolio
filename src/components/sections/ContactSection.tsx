@@ -123,7 +123,7 @@ const ContactSection = () => {
                           </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 group" disabled={form.formState.isSubmitting}>
+                    <Button type="submit" className="w-full sm:w-auto group" disabled={form.formState.isSubmitting}>
                       {form.formState.isSubmitting ? 'Sending...' : 'Send Message'}
                       {!form.formState.isSubmitting && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </Button>
@@ -152,19 +152,19 @@ const ContactSection = () => {
                     </div>
                 </CardContent>
             </Card>
-            <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <Card className="shadow-lg group hover:shadow-xl transition-shadow duration-300">
                 <CardHeader>
                     <CardTitle className="text-xl">Connect With Me</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                     <Button variant="outline" className="w-full justify-start hover:border-accent hover:text-accent transition-colors group" asChild>
+                     <Button variant="outline" className="w-full justify-start  transition-colors group" asChild>
                         <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
-                            <Github className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> GitHub
+                            <Github className="mr-2 h-5 w-5 text-primary  transition-colors" /> GitHub
                         </Link>
                     </Button>
-                     <Button variant="outline" className="w-full justify-start hover:border-accent hover:text-accent transition-colors group" asChild>
+                     <Button variant="outline" className="w-full justify-start  transition-colors group" asChild>
                         <Link href="https://linkedin.com/in/jagan-mohan-reddy-kontham-445250293/" target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
+                            <Linkedin className="mr-2 h-5 w-5 text-primary  transition-colors" /> LinkedIn
                         </Link>
                     </Button>
                 </CardContent>
@@ -177,4 +177,5 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
 

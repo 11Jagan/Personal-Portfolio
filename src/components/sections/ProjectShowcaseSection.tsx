@@ -89,7 +89,7 @@ const ProjectShowcaseSection = () => {
                   </Button>
                 )}
                 {project.liveDemoUrl && (
-                  <Button variant="default" size="sm" asChild className="bg-primary hover:bg-primary/90">
+                  <Button variant="default" size="sm" asChild className=" hover:bg-primary/90">
                     <a href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="mr-2 h-4 w-4" /> Live Demo
                     </a>
@@ -105,3 +105,4 @@ const ProjectShowcaseSection = () => {
 };
 
 export default ProjectShowcaseSection;
+
