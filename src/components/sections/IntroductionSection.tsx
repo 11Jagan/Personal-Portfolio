@@ -19,6 +19,7 @@ const IntroductionSection = () => {
                 layout="fill"
                 objectFit="cover"
                 className="transform transition-transform duration-500 hover:scale-105"
+                data-ai-hint="profile picture"
               />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-center md:text-left mb-2">Kontham Jagan Mohan Reddy</h1>
