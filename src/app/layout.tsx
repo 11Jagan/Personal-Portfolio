@@ -33,7 +33,7 @@ export default function RootLayout({
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange
+          disableTransitionOnChange={false}
         >
           <Header />
           <main className="flex-grow container mx-auto px-4 py-8">
