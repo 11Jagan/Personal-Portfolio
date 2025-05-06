@@ -24,7 +24,7 @@ const projects: Project[] = [
     imageHint: 'online store',
     tags: ['Next.js', 'Stripe', 'Firebase', 'Tailwind CSS'],
     liveDemoUrl: '#',
-    repoUrl: '#',
+    repoUrl: 'https://github.com/11Jagan',
   },
   {
     id: 'project-2',
@@ -34,6 +34,8 @@ const projects: Project[] = [
     imageHint: 'to do list',
     tags: ['React', 'Node.js', 'MongoDB', 'Socket.io'],
     liveDemoUrl: '#',
+    // No repoUrl for this project, so GitHub button won't render as per current logic.
+    // If one is desired, it can be added: repoUrl: 'https://github.com/11Jagan',
   },
   {
     id: 'project-3',
@@ -42,7 +44,7 @@ const projects: Project[] = [
     imageUrl: 'https://picsum.photos/600/400?random=3',
     imageHint: 'website builder',
     tags: ['Next.js', 'TypeScript', 'Vercel'],
-    repoUrl: '#',
+    repoUrl: 'https://github.com/11Jagan',
   },
 ];
 
@@ -56,7 +58,7 @@ const ProjectShowcaseSection = () => {
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project) => (
-            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 group">
               <div className="relative w-full h-56">
                 <Image
                   src={project.imageUrl}
