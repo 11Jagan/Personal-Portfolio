@@ -7,37 +7,35 @@ import { createContext, useContext, useState, useEffect } from 'react';
 interface LoadingContextType {
   isLoading: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>; // Kept for flexibility, though showLoadingForDuration is primary
-  showLoadingForDuration: (duration: number, hash?: string) => void;
+  showLoadingForDuration: (duration?: number, hash?: string) => void; // Duration is now optional
 }
 
 const LoadingContext = createContext<LoadingContextType | undefined>(undefined);
+
+const DEFAULT_LOADING_DURATION = 2500; // Default duration set to 2500ms
 
 export const LoadingProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [targetHash, setTargetHash] = useState<string | undefined>(undefined);
 
-  const showLoadingForDuration = (duration: number, hash?: string) => {
+  const showLoadingForDuration = (duration: number = DEFAULT_LOADING_DURATION, hash?: string) => {
     setIsLoading(true);
     if (hash) {
       setTargetHash(hash);
     }
-    // If it's a full page navigation (e.g. hash is '/'), don't set a timeout for manual isLoading=false,
-    // let Next.js routing and its own loading.tsx handle it.
-    // Only set timeout for in-page hash navigations.
-    if (hash && hash.startsWith('#')) {
+    
+    // Use the provided duration or the default
+    const currentDuration = duration;
+
+    // Only set timeout for in-page hash navigations or generic loading calls.
+    if ((hash && hash.startsWith('#')) || !hash) {
       setTimeout(() => {
         setIsLoading(false);
         // Scrolling will be handled by the useEffect below
-      }, duration);
-    } else if (!hash) { // For generic loading calls without a hash
-        setTimeout(() => {
-            setIsLoading(false);
-        }, duration);
+      }, currentDuration);
     }
     // If hash is something like '/', isLoading becomes true, and Next.js routing will eventually
-    // complete and its loading.tsx will disappear, at which point isLoading should ideally be reset
-    // if it wasn't already by a timeout. This needs careful handling if used for full page loads.
-    // For now, this context is primarily for in-page hash scrolling.
+    // complete and its loading.tsx will disappear.
   };
 
   useEffect(() => {
@@ -65,3 +63,4 @@ export const useLoading = (): LoadingContextType => {
   }
   return context;
 };
+

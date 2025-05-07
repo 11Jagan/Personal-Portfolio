@@ -14,10 +14,10 @@ const Header = () => {
 
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
     if (href.startsWith('#')) {
-      // For in-page hash links, show the loading screen.
+      // For in-page hash links, show the loading screen using the default duration.
       // The Link component will update the URL hash.
       // Scrolling is handled by the LoadingContext after the delay.
-      showLoadingForDuration(1000, href); // Decreased duration to 1000ms
+      showLoadingForDuration(undefined, href); // Pass undefined to use default duration
     }
     // For other links (e.g., '/'), allow default Next.js Link behavior and its own loading.tsx.
   };
@@ -50,3 +50,4 @@ const Header = () => {
 };
 
 export default Header;
+
