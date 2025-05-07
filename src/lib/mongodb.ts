@@ -37,10 +37,10 @@ declare global {
 }
 
 if (!MONGODB_URI || MONGODB_URI === "YOUR_MONGODB_CONNECTION_STRING") {
-  console.error("CRITICAL_MONGODB_CONFIG: MONGODB_URI is not defined or is set to the placeholder value. Please define a valid MONGODB_URI in your .env.local file or deployment environment. The contact form will not work without it.");
-  // clientPromise remains null, which will be handled by the API route.
+  console.warn("MONGODB_CONFIG: MONGODB_URI is not defined or is set to the placeholder value. If you intend to use MongoDB for features other than the contact form, please define a valid MONGODB_URI. The contact form now uses a 'mailto:' link and does not require MongoDB.");
+  // clientPromise remains null.
 } else if (!MONGODB_URI.startsWith("mongodb://") && !MONGODB_URI.startsWith("mongodb+srv://")) {
-  console.error(`CRITICAL_MONGODB_CONFIG: Invalid MONGODB_URI scheme. Expected connection string to start with "mongodb://" or "mongodb+srv://". Received: "${MONGODB_URI.substring(0,20)}..." The contact form will not work.`);
+  console.error(`CRITICAL_MONGODB_CONFIG: Invalid MONGODB_URI scheme. Expected connection string to start with "mongodb://" or "mongodb+srv://". Received: "${MONGODB_URI.substring(0,20)}..." MongoDB dependent features will not work.`);
   // clientPromise remains null
 } else {
   try {
@@ -60,7 +60,7 @@ if (!MONGODB_URI || MONGODB_URI === "YOUR_MONGODB_CONNECTION_STRING") {
       console.info("MongoDB: New connection initiated for production.");
     }
   } catch (error: any) {
-    console.error(`CRITICAL_MONGODB_SETUP_FAILED: Failed to initialize MongoClient. Error: ${error.message}. Check your MONGODB_URI and network settings.`);
+    console.error(`CRITICAL_MONGODB_SETUP_FAILED: Failed to initialize MongoClient. Error: ${error.message}. Check your MONGODB_URI and network settings. MongoDB dependent features will not work.`);
     clientPromise = null; // Ensure clientPromise is null on setup failure.
   }
 }

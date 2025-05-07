@@ -34,9 +34,8 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading } = useLoading();
+  const { showLoadingForDuration, setIsLoading } = useLoading(); // setIsLoading for finer control if needed
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
-
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -49,87 +48,46 @@ const ContactSection = () => {
     mode: "onChange",
   });
 
-  const userEmail = "konthamjaganmohanreddy@gmail.com";
-  const mailtoLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${userEmail}&su=Contact%20from%20Portfolio`;
+  const recipientEmail = "konthamjaganmohanreddy@gmail.com";
+  const mailtoLinkDirect = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipientEmail}&su=Contact%20from%20Portfolio`;
 
 
   async function onSubmit(data: ContactFormValues) {
     console.log("ContactSection onSubmit: Form submitted with data:", data);
     setIsSubmittingState(true);
-    setIsLoading(true); 
+    setIsLoading(true); // Show loading spinner briefly
+
+    const { name, email, subject, message } = data;
     
-    let toastTitle = "Processing...";
-    let toastDescription = "Submitting your message...";
-    let toastVariant: "default" | "destructive" = "default";
+    const mailtoBody = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
+    const mailtoSubject = `Portfolio Contact: ${subject}`;
+    const mailtoHref = `mailto:${recipientEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
 
     try {
-      console.log("ContactSection onSubmit: Sending POST request to /api/contact");
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      console.log(`ContactSection onSubmit: Received response from /api/contact with status ${response.status}`);
-
-      const responseBodyText = await response.text(); 
-      console.log("ContactSection onSubmit: Response body text:", responseBodyText.substring(0, 500) + (responseBodyText.length > 500 ? "..." : ""));
-
-
-      if (response.ok) { 
-        form.reset(); 
-        try {
-          const result = JSON.parse(responseBodyText); 
-          console.log("ContactSection onSubmit: Parsed successful API JSON response:", result);
-          toastTitle = "Message Sent!";
-          toastDescription = result.message || "Your message has been successfully submitted.";
-          toastVariant = "default";
-        } catch (e) {
-          console.warn("ContactSection onSubmit: Could not parse JSON from successful-status response. Body:", responseBodyText, "Error:", e);
-          toastTitle = "Message Processed (Unexpected Format)";
-          toastDescription = `Server sent success status (${response.status}) but the response was not valid JSON. Content: ${responseBodyText.substring(0,100)}...`;
-          toastVariant = "destructive"; 
-        }
-      } else { 
-        toastTitle = "Submission Error";
-        toastVariant = "destructive";
-        try {
-          const errorResult = JSON.parse(responseBodyText); 
-          console.warn("ContactSection onSubmit: Parsed API error JSON response:", errorResult);
-          toastDescription = errorResult.error || errorResult.message || `Server responded with status ${response.status}.`;
-          if (errorResult.details) {
-             toastDescription += ` Details: ${typeof errorResult.details === 'string' ? errorResult.details : JSON.stringify(errorResult.details)}`;
-             console.warn("ContactSection onSubmit: Error details from API:", errorResult.details);
-          }
-        } catch (e) { 
-          console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
-          if (responseBodyText.toLowerCase().includes("<html")) {
-             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
-             console.error("ContactSection onSubmit: HTML Error Page Snippet from /api/contact:", responseBodyText.substring(0, 300));
-          } else {
-            toastDescription = responseBodyText.trim() || `Server error: ${response.status}. The response was not in the expected JSON format. Please try again.`;
-          }
-        }
-      }
-    } catch (error) { 
-      console.error("ContactSection onSubmit: Network or client-side error during contact form submission:", error);
-      toastTitle = "Network Error";
-      toastVariant = "destructive";
-      toastDescription = "Failed to send message. Please check your network connection or try again later.";
-      if (error instanceof Error) {
-         toastDescription = `Client-side error: ${error.message || "An unexpected error occurred."}`;
-      }
-    } finally {
-      console.log("ContactSection onSubmit: Displaying toast:", { title: toastTitle, description: toastDescription, variant: toastVariant });
+      // Attempt to open the mail client
+      window.location.href = mailtoHref;
+      
       toast({
-        title: toastTitle,
-        description: toastDescription,
-        variant: toastVariant,
-        duration: toastVariant === "destructive" ? 8000 : 5000,
+        title: "Opening Email Client",
+        description: "Please complete sending your message through your email application.",
+        variant: "default",
+        duration: 5000,
       });
-      setIsLoading(false); 
-      setIsSubmittingState(false);
+      form.reset();
+    } catch (error) {
+      console.error("ContactSection onSubmit: Error trying to open mailto link:", error);
+      toast({
+        title: "Error",
+        description: "Could not open your email client. Please try copying the email address.",
+        variant: "destructive",
+        duration: 8000,
+      });
+    } finally {
+      // Simulate a short delay for user feedback even if mailto opens instantly
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsSubmittingState(false);
+      }, 1000); // Short delay
     }
   }
   
@@ -140,14 +98,14 @@ const ContactSection = () => {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-primary animate-slideUpFadeIn opacity-0" style={{animationDelay: '0ms', animationFillMode: 'forwards'}}>Get In Touch</h2>
         <p className="text-md sm:text-lg text-muted-foreground text-center mb-10 md:mb-12 max-w-xl mx-auto animate-slideUpFadeIn opacity-0" style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
-          Have a project in mind, a question, or just want to say hi? Feel free to reach out. I&apos;ll do my best to respond within 24 hours.
+          Have a project in mind, a question, or just want to say hi? Feel free to reach out. Your message will open in your default email client.
         </p>
         <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 animate-slideUpFadeIn opacity-0" style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Your message will be saved to our database.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Clicking &quot;Send Message&quot; will open your email client.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
@@ -171,9 +129,9 @@ const ContactSection = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm">Email Address</FormLabel>
+                            <FormLabel className="text-sm">Your Email Address (for reply)</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="konthamjaganmohanreddy@gmail.com" {...field} />
+                              <Input type="email" placeholder="your.email@example.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -207,7 +165,7 @@ const ContactSection = () => {
                       )}
                     />
                     <Button type="submit" className={cn("w-full sm:w-auto group", "interactive-border")} disabled={isButtonDisabled}>
-                      {isButtonDisabled ? 'Sending...' : 'Send Message'}
+                      {isButtonDisabled ? 'Preparing...' : 'Send Message via Email Client'}
                       {!isButtonDisabled && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </Button>
                   </form>
@@ -223,7 +181,7 @@ const ContactSection = () => {
                 <CardContent className="space-y-3 p-4 sm:p-6">
                     <div className="flex items-center space-x-2 sm:space-x-3 group">
                         <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" />
-                        <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">konthamjaganmohanreddy@gmail.com</a>
+                        <a href={mailtoLinkDirect} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">{recipientEmail}</a>
                     </div>
                     <div className="flex items-center space-x-2 sm:space-x-3 group">
                         <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" />
