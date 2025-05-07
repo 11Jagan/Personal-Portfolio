@@ -18,13 +18,14 @@ export async function POST(request: NextRequest) {
   // Check if MONGODB_URI was set and clientPromise was initialized.
   // clientPromise will be null if MONGODB_URI is missing, a placeholder, or invalid.
   if (!clientPromise) {
-    const errorMessage = "CRITICAL_SERVER_CONFIG_ERROR: MongoDB connection is not configured or failed to initialize.";
-    const errorDetails = "The MONGODB_URI is missing, invalid, or connection could not be established. Please ensure MONGODB_URI is correctly set in your .env.local or deployment environment and the MongoDB server is accessible. The contact form cannot save messages without a valid database connection.";
-    console.error(`${errorMessage} Details: ${errorDetails}`);
+    const serverErrorMessage = "CRITICAL_SERVER_CONFIG_ERROR: MongoDB connection is not configured or failed to initialize.";
+    const clientErrorDetails = "The MongoDB connection string (MONGODB_URI) is missing, invalid, or the placeholder value is still in use. Please check your .env.local file or deployment environment variables. Refer to README.md for setup instructions.";
+    
+    console.error(`${serverErrorMessage} Details: ${clientErrorDetails}`);
     return NextResponse.json(
       {
-        error: 'Server Configuration Error: Database Unavailable.',
-        details: 'The application is not configured to connect to the database. Please contact the administrator.',
+        error: 'MongoDB Configuration Error', // More specific title for the client
+        details: clientErrorDetails,
       },
       { status: 503 } // 503 Service Unavailable
     );
@@ -109,10 +110,10 @@ export async function POST(request: NextRequest) {
         errorMessage = 'Database Authentication Failed.';
         errorDetails = `Could not authenticate with the database: ${error.message}. Please check your MONGODB_URI credentials.`;
         statusCode = 401; // Unauthorized
-    } else if (error.name === 'MongoParseError') { // This should ideally be caught by mongodb.ts, but as a fallback
+    } else if (error.name === 'MongoParseError') { 
         errorMessage = 'Invalid MongoDB URI Format.';
         errorDetails = `The provided MONGODB_URI is not valid: ${error.message}. Please ensure it starts with "mongodb://" or "mongodb+srv://".`;
-        statusCode = 500; // Internal Server Error due to configuration
+        statusCode = 500; 
     }
         
     return NextResponse.json(
