@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Github, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface Project {
   id: string;
@@ -34,8 +35,7 @@ const projects: Project[] = [
     imageHint: 'to do list',
     tags: ['React', 'Node.js', 'MongoDB', 'Socket.io'],
     liveDemoUrl: '#',
-    // No repoUrl for this project, so GitHub button won't render as per current logic.
-    // If one is desired, it can be added: repoUrl: 'https://github.com/11Jagan',
+    repoUrl: 'https://github.com/11Jagan',
   },
   {
     id: 'project-3',
@@ -58,7 +58,7 @@ const ProjectShowcaseSection = () => {
         </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {projects.map((project) => (
-            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg transition-shadow duration-300 transform hover:-translate-y-1 group rotate-border">
+            <Card key={project.id} className="flex flex-col overflow-hidden shadow-lg transition-transform duration-300 transform hover:-translate-y-1 group rotate-border">
               <div className="relative w-full h-56">
                 <Image
                   src={project.imageUrl}
@@ -82,14 +82,14 @@ const ProjectShowcaseSection = () => {
               </CardContent>
               <CardFooter className="flex justify-end space-x-3 pt-4">
                 {project.repoUrl && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" asChild className="interactive-border">
                     <a href={project.repoUrl} target="_blank" rel="noopener noreferrer">
                       <Github className="mr-2 h-4 w-4" /> GitHub
                     </a>
                   </Button>
                 )}
                 {project.liveDemoUrl && (
-                  <Button variant="default" size="sm" asChild className=" hover:bg-primary/90">
+                  <Button variant="default" size="sm" asChild className="interactive-border">
                     <a href={project.liveDemoUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="mr-2 h-4 w-4" /> Live Demo
                     </a>
@@ -105,4 +105,3 @@ const ProjectShowcaseSection = () => {
 };
 
 export default ProjectShowcaseSection;
-

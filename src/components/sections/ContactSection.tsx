@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Linkedin, Github, Send, Smartphone, MapPin } from 'lucide-react';
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -123,7 +124,7 @@ const ContactSection = () => {
                           </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full sm:w-auto group" disabled={form.formState.isSubmitting}>
+                    <Button type="submit" className={cn("w-full sm:w-auto group", "interactive-border")} disabled={form.formState.isSubmitting}>
                       {form.formState.isSubmitting ? 'Sending...' : 'Send Message'}
                       {!form.formState.isSubmitting && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </Button>
@@ -138,9 +139,9 @@ const ContactSection = () => {
                     <CardTitle className="text-xl">Contact Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                        <Mail className="h-5 w-5 text-primary" />
-                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-accent transition-colors">konthamjaganmohanredy@gmail.com</a>
+                    <div className="flex items-center space-x-3 group">
+                        <Mail className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
+                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">konthamjaganmohanredy@gmail.com</a>
                     </div>
                     <div className="flex items-center space-x-3">
                         <Smartphone className="h-5 w-5 text-primary" />
@@ -157,14 +158,14 @@ const ContactSection = () => {
                     <CardTitle className="text-xl">Connect With Me</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                     <Button variant="outline" className="w-full justify-start  transition-colors group" asChild>
+                     <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
                         <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
-                            <Github className="mr-2 h-5 w-5 text-primary  transition-colors" /> GitHub
+                            <Github className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> GitHub
                         </Link>
                     </Button>
-                     <Button variant="outline" className="w-full justify-start  transition-colors group" asChild>
+                     <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
                         <Link href="https://linkedin.com/in/jagan-mohan-reddy-kontham-445250293/" target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-2 h-5 w-5 text-primary  transition-colors" /> LinkedIn
+                            <Linkedin className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
                         </Link>
                     </Button>
                 </CardContent>
@@ -177,5 +178,3 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
-
-

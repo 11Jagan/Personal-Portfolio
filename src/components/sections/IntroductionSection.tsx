@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Github, Lightbulb, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const IntroductionSection = () => {
   const skills = ['HTML', 'CSS', 'JavaScript', 'Bootstrap', 'Node.js', 'Express.js', 'MongoDB', 'React (Learning)', 'Python (Learning)'];
@@ -25,7 +26,7 @@ const IntroductionSection = () => {
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-center md:text-left mb-2">Kontham Jagan Mohan Reddy</h1>
             <p className="text-xl text-muted-foreground text-center md:text-left mb-4">Full-Stack Developer</p>
-            <Button className="w-full md:w-auto group" asChild>
+            <Button className={cn("w-full md:w-auto group", "interactive-border")} asChild>
               <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
                 View GitHub Profile
                 <Github className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -75,4 +76,3 @@ const IntroductionSection = () => {
 };
 
 export default IntroductionSection;
-

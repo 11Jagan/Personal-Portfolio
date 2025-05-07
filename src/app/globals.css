@@ -114,12 +114,6 @@ body {
      /* Ensure dark mode also has a vibrant border */
      border-image: conic-gradient(from var(--angle), hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.8)) 1;
    }
-  .rotate-border {
-    --rotate-angle: 0deg; /* Define the initial angle */
-    border: 2px solid;
-    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
-    animation: rotate 4s linear infinite;
-  }
 
   @property --angle {
     syntax: '<angle>';
@@ -133,26 +127,42 @@ body {
     }
   }
 
-    @keyframes rotate {
+  /* New interactive border system */
+  @property --rotate-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false; /* Make it false so each element animates independently */
+  }
+
+  @keyframes rotate {
     to {
-      --rotate-angle: 360deg; /* Rotate 360 degrees */
+      --rotate-angle: 360deg;
     }
   }
 
-  .button-hover-effect:hover {
-    border: 2px solid; /* Set border */
-    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
-    animation: rotate 4s linear infinite;
+  .interactive-border {
+    --rotate-angle: 0deg; /* Initialize for animation */
+    background-clip: padding-box !important; /* Important for rounded corners with border-image, !important to override potential conflicts */
+    /* Ensure elements have a border structure.
+       Buttons/Inputs will define this in their CVA or base styles.
+       e.g., border-2 border-transparent or border-2 border-input
+    */
   }
-  .input-focus-effect:focus {
-    border: 2px solid; /* Set border */
-    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+
+  .interactive-border:hover,
+  .interactive-border:focus-visible {
+    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary))) 1;
     animation: rotate 4s linear infinite;
+    /* The '1' in border-image-slice makes it fill the border box */
   }
-  .link-hover-effect:hover {
-    border: 2px solid; /* Set border */
-    border-image: conic-gradient(from var(--rotate-angle), rgb(var(--primary)), rgb(var(--accent))) 1;
+  
+  /* This class is for elements that should have the border always rotating, like project cards */
+  .rotate-border {
+    --rotate-angle: 0deg; /* Define the initial angle */
+    border: 2px solid; /* Keep existing border style for cards */
+    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent))) 1;
     animation: rotate 4s linear infinite;
+    background-clip: padding-box !important;
   }
 
 
