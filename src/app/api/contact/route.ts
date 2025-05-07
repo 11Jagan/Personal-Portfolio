@@ -4,7 +4,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFunctions, httpsCallable, type Functions } from 'firebase/functions';
-// Removed: import * as logger from 'firebase-functions/logger'; // Not used in client-side API route
 
 // Schema for validating contact form data
 const contactFormSchema = z.object({
@@ -44,31 +43,34 @@ function initializeFirebaseServices(): { functions: Functions } {
   if (!appInstance) {
     const missingConfigVars = checkFirebaseConfig();
     if (missingConfigVars.length > 0) {
-      const errorMsg = `Firebase client configuration is incomplete for the API route. Missing: ${missingConfigVars.join(', ')}. Cannot process request. Please ensure these NEXT_PUBLIC_FIREBASE_ environment variables are set.`;
-      console.error("CRITICAL_FIREBASE_CONFIG_API_ROUTE:", errorMsg); // This log is crucial for server-side debugging
+      const errorMsg = `Firebase client configuration is incomplete for the API route. Missing: ${missingConfigVars.join(', ')}. Cannot process request. Please ensure these NEXT_PUBLIC_FIREBASE_ environment variables are set. Attempted Project ID: ${firebaseConfig.projectId || "NOT SET"}.`;
+      console.error("CRITICAL_FIREBASE_CONFIG_API_ROUTE:", errorMsg);
       throw new Error(errorMsg);
     }
 
     if (!getApps().length) {
-      console.info("API Route: Initializing new Firebase app instance.");
+      console.info(`API Route: Initializing new Firebase app instance for project ID: ${firebaseConfig.projectId}.`);
       appInstance = initializeApp(firebaseConfig);
     } else {
-      console.info("API Route: Getting existing Firebase app instance.");
+      console.info(`API Route: Getting existing Firebase app instance for project ID: ${firebaseConfig.projectId}.`);
       appInstance = getApp();
     }
   }
 
   if (!functionsInstance) {
-    functionsInstance = getFunctions(appInstance);
+    // Ensure functions are initialized for the correct region if not us-central1
+    // For now, using default region which is typically us-central1
+    functionsInstance = getFunctions(appInstance); 
+    console.info(`API Route: Firebase Functions initialized for project ID: ${firebaseConfig.projectId}. Default region unless specified.`);
   }
   return { functions: functionsInstance };
 }
 
 export async function POST(request: NextRequest) {
   console.info("/api/contact POST: Request received at", new Date().toISOString());
+  console.info("/api/contact POST: Attempting to use Firebase Project ID:", firebaseConfig.projectId || "NOT SET in environment variables");
   
   try {
-    // Check Firebase config first. This will throw if incomplete.
     const { functions: firebaseFunctions } = initializeFirebaseServices();
     console.info("/api/contact POST: Firebase services initialized/obtained.");
 
@@ -101,40 +103,41 @@ export async function POST(request: NextRequest) {
       console.info("/api/contact POST: 'sendContactEmail' Cloud Function returned:", emailResultData);
 
       if (!emailResultData || typeof emailResultData.success === 'undefined') {
-        emailNotificationError = "Cloud Function returned an unexpected response format.";
+        emailNotificationError = "Cloud Function 'sendContactEmail' returned an unexpected response format.";
         console.error("/api/contact POST: Cloud Function response format error:", emailResultData);
       } else if (!emailResultData.success) {
-        emailNotificationError = emailResultData.error || emailResultData.message || "Cloud Function indicated email sending failed.";
-        console.error("/api/contact POST: Cloud Function email sending failed:", emailNotificationError);
+        emailNotificationError = emailResultData.error || emailResultData.message || "Cloud Function 'sendContactEmail' indicated email sending failed.";
+        console.error("/api/contact POST: Cloud Function 'sendContactEmail' email sending failed:", emailNotificationError);
       } else {
-        console.info("/api/contact POST: Cloud Function for email sending reported success.");
+        console.info("/api/contact POST: Cloud Function for 'sendContactEmail' reported success.");
       }
     } catch (error: any) {
       console.error("/api/contact POST: Error calling 'sendContactEmail' Cloud Function:", error.code, error.message, error.details, error.stack);
       let errorMessage = 'The email notification service encountered an error.';
-      if (error.code && error.message) {
-         errorMessage += ` Code: ${error.code}, Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail'.`;
+      
+      if (error.code === 'functions/not-found') {
+        errorMessage = `The 'sendContactEmail' Cloud Function was not found in your Firebase project (ID: '${firebaseConfig.projectId || "Project ID Not Configured"}'). Please ensure the function is correctly deployed to this project and its region. Original error: ${error.message}.`;
+      } else if (error.code && error.message) {
+         errorMessage += ` Code: ${error.code}, Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${firebaseConfig.projectId || "Project ID Not Configured"}'.`;
       } else if (error.message) {
-        errorMessage += ` Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail'.`;
+        errorMessage += ` Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${firebaseConfig.projectId || "Project ID Not Configured"}'.`;
       } else {
-        errorMessage += " An unknown error occurred while calling the function. Check Firebase Function logs for 'sendContactEmail'.";
+        errorMessage += ` An unknown error occurred while calling the 'sendContactEmail' function for project '${firebaseConfig.projectId || "Project ID Not Configured"}'. Check Firebase Function logs.`;
       }
       emailNotificationError = errorMessage;
     }
 
     if (emailNotificationError) {
-      // This error is specifically from the Cloud Function call or its response
       return NextResponse.json({ 
         error: 'Failed to process email notification via Cloud Function.', 
         details: emailNotificationError 
       }, { status: 500 });
     }
 
-    console.info("/api/contact POST: Request processed successfully. Email notification initiated.");
+    console.info("/api/contact POST: Request processed successfully. Email notification via 'sendContactEmail' initiated.");
     return NextResponse.json({ message: 'Message sent successfully via API route!', data: parsedData.data }, { status: 200 });
 
   } catch (error: any) {
-    // This outer catch handles errors from initializeFirebaseServices or other unexpected issues within this API route.
     const errorMessage = error.message || 'No additional details provided.';
     const errorStack = error.stack || 'No stack trace available.';
     console.error('CRITICAL_ERROR in /api/contact POST handler:', errorMessage, errorStack, { originalError: error });
@@ -142,7 +145,6 @@ export async function POST(request: NextRequest) {
     let publicErrorMessage = 'An unexpected internal server error occurred in the API route.';
     
     if (errorMessage.includes("Firebase client configuration is incomplete")) {
-      // This is the expected error if env vars are missing for the API route client
       publicErrorMessage = `Server Configuration Error: ${errorMessage} Please check server logs and ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set for the API route.`;
     } else if (errorMessage.includes("Failed to initialize Firebase")) { 
       publicErrorMessage = `Server setup error: ${errorMessage}`;
