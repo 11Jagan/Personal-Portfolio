@@ -23,31 +23,59 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Helper function to check for missing Firebase configuration variables
-function checkFirebaseConfig(): string[] {
+// Helper function to check for missing or placeholder Firebase configuration variables
+function checkFirebaseConfig(): { missing: string[], placeholderProjectId: boolean, actualProjectId: string | undefined } {
   const missingVars: string[] = [];
+  let placeholderProjectId = false;
+
   if (!firebaseConfig.apiKey) missingVars.push("NEXT_PUBLIC_FIREBASE_API_KEY");
   if (!firebaseConfig.authDomain) missingVars.push("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN");
-  if (!firebaseConfig.projectId) missingVars.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+  
+  if (!firebaseConfig.projectId) {
+    missingVars.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+  } else if (firebaseConfig.projectId === "YOUR_FIREBASE_PROJECT_ID_HERE" || 
+             firebaseConfig.projectId.toUpperCase().includes("YOUR_") || 
+             firebaseConfig.projectId.toUpperCase().includes("_HERE")) {
+    placeholderProjectId = true;
+  }
+
   if (!firebaseConfig.storageBucket) missingVars.push("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET");
   if (!firebaseConfig.messagingSenderId) missingVars.push("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID");
   if (!firebaseConfig.appId) missingVars.push("NEXT_PUBLIC_FIREBASE_APP_ID");
-  return missingVars;
+  
+  return { missing: missingVars, placeholderProjectId: placeholderProjectId, actualProjectId: firebaseConfig.projectId };
 }
 
 let appInstance: FirebaseApp | null = null;
 let functionsInstance: Functions | null = null;
 
 // Initialize Firebase services (app, Functions)
-function initializeFirebaseServices(): { functions: Functions } {
-  if (!appInstance) {
-    const missingConfigVars = checkFirebaseConfig();
+function initializeFirebaseServices(): { app: FirebaseApp, functions: Functions } {
+  if (!appInstance) { // Only attempt initialization if not already done
+    const { missing: missingConfigVars, placeholderProjectId, actualProjectId } = checkFirebaseConfig();
+    const errorMessages: string[] = [];
+
     if (missingConfigVars.length > 0) {
-      const errorMsg = `Firebase client configuration is incomplete for the API route. Missing: ${missingConfigVars.join(', ')}. Cannot process request. Please ensure these NEXT_PUBLIC_FIREBASE_ environment variables are set. Attempted Project ID: ${firebaseConfig.projectId || "NOT SET"}.`;
-      console.error("CRITICAL_FIREBASE_CONFIG_API_ROUTE:", errorMsg);
-      throw new Error(errorMsg);
+      errorMessages.push(`Missing critical Firebase environment variables: ${missingConfigVars.join(', ')}.`);
+    }
+    if (placeholderProjectId) {
+      errorMessages.push(`The Firebase Project ID (NEXT_PUBLIC_FIREBASE_PROJECT_ID) is set to a placeholder value: "${actualProjectId}".`);
     }
 
+    if (errorMessages.length > 0) {
+      const fullErrorMsg = `Firebase client configuration error: ${errorMessages.join(' ')} Cannot initialize Firebase services. Please ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set in your environment (e.g., .env.local file) with your actual Firebase project credentials.`;
+      console.error("CRITICAL_FIREBASE_CONFIG_API_ROUTE:", fullErrorMsg, "Current Config for Logging (sensitive values like apiKey are generalized):", {
+        apiKeySet: !!firebaseConfig.apiKey,
+        authDomain: firebaseConfig.authDomain,
+        projectId: firebaseConfig.projectId,
+        storageBucket: firebaseConfig.storageBucket,
+        messagingSenderIdSet: !!firebaseConfig.messagingSenderId,
+        appIdSet: !!firebaseConfig.appId,
+      });
+      throw new Error(fullErrorMsg);
+    }
+
+    // Proceed with initialization if config is valid
     if (!getApps().length) {
       console.info(`API Route: Initializing new Firebase app instance for project ID: ${firebaseConfig.projectId}.`);
       appInstance = initializeApp(firebaseConfig);
@@ -57,20 +85,26 @@ function initializeFirebaseServices(): { functions: Functions } {
     }
   }
 
-  if (!functionsInstance) {
-    // Ensure functions are initialized for the correct region if not us-central1
-    // For now, using default region which is typically us-central1
-    functionsInstance = getFunctions(appInstance); 
-    console.info(`API Route: Firebase Functions initialized for project ID: ${firebaseConfig.projectId}. Default region unless specified.`);
+  if (appInstance && !functionsInstance) {
+    functionsInstance = getFunctions(appInstance);
+    console.info(`API Route: Firebase Functions initialized for project ID: ${appInstance.options.projectId}.`);
   }
-  return { functions: functionsInstance };
+  
+  if (!appInstance || !functionsInstance) {
+    // This case should ideally be caught by the config checks, but as a safeguard:
+    console.error("CRITICAL_FIREBASE_INIT_FAILURE: Firebase app or functions instance is null after attempting initialization. This should not happen if config checks passed.");
+    throw new Error("Failed to initialize Firebase app or functions. This is an unexpected server state. Check server logs for CRITICAL_FIREBASE_CONFIG_API_ROUTE messages.");
+  }
+
+  return { app: appInstance, functions: functionsInstance };
 }
 
 export async function POST(request: NextRequest) {
   console.info("/api/contact POST: Request received at", new Date().toISOString());
-  console.info("/api/contact POST: Attempting to use Firebase Project ID:", firebaseConfig.projectId || "NOT SET in environment variables");
+  console.info("/api/contact POST: Attempting to use Firebase Project ID from env:", process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "NOT SET in environment variables");
   
   try {
+    // Initialize services. This will throw if config is bad.
     const { functions: firebaseFunctions } = initializeFirebaseServices();
     console.info("/api/contact POST: Firebase services initialized/obtained.");
 
@@ -115,14 +149,17 @@ export async function POST(request: NextRequest) {
       console.error("/api/contact POST: Error calling 'sendContactEmail' Cloud Function:", error.code, error.message, error.details, error.stack);
       let errorMessage = 'The email notification service encountered an error.';
       
+      // Use the projectId from the successfully initialized appInstance for more accurate error reporting
+      const currentProjectId = appInstance?.options.projectId || firebaseConfig.projectId || "Project ID Not Configured";
+
       if (error.code === 'functions/not-found') {
-        errorMessage = `The 'sendContactEmail' Cloud Function was not found in your Firebase project (ID: '${firebaseConfig.projectId || "Project ID Not Configured"}'). Please ensure the function is correctly deployed to this project and its region. Original error: ${error.message}.`;
+        errorMessage = `The 'sendContactEmail' Cloud Function was not found in your Firebase project (ID: '${currentProjectId}'). Please ensure the function is correctly deployed to this project and its region. Original error: ${error.message}.`;
       } else if (error.code && error.message) {
-         errorMessage += ` Code: ${error.code}, Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${firebaseConfig.projectId || "Project ID Not Configured"}'.`;
+         errorMessage += ` Code: ${error.code}, Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${currentProjectId}'.`;
       } else if (error.message) {
-        errorMessage += ` Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${firebaseConfig.projectId || "Project ID Not Configured"}'.`;
+        errorMessage += ` Message: ${error.message}. Check Firebase Function logs for 'sendContactEmail' in project '${currentProjectId}'.`;
       } else {
-        errorMessage += ` An unknown error occurred while calling the 'sendContactEmail' function for project '${firebaseConfig.projectId || "Project ID Not Configured"}'. Check Firebase Function logs.`;
+        errorMessage += ` An unknown error occurred while calling the 'sendContactEmail' function for project '${currentProjectId}'. Check Firebase Function logs.`;
       }
       emailNotificationError = errorMessage;
     }
@@ -144,8 +181,8 @@ export async function POST(request: NextRequest) {
     
     let publicErrorMessage = 'An unexpected internal server error occurred in the API route.';
     
-    if (errorMessage.includes("Firebase client configuration is incomplete")) {
-      publicErrorMessage = `Server Configuration Error: ${errorMessage} Please check server logs and ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set for the API route.`;
+    if (errorMessage.includes("Firebase client configuration error")) { // Matches the specific error from initializeFirebaseServices
+      publicErrorMessage = `Server Configuration Error: ${errorMessage}. Please check server logs and ensure all NEXT_PUBLIC_FIREBASE_ environment variables are correctly set with your actual Firebase project credentials.`;
     } else if (errorMessage.includes("Failed to initialize Firebase")) { 
       publicErrorMessage = `Server setup error: ${errorMessage}`;
     }
