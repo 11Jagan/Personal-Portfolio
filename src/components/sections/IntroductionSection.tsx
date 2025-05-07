@@ -14,7 +14,7 @@ const IntroductionSection = () => {
       <div className="container mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8 items-center">
           <div className="md:col-span-1 flex flex-col items-center md:items-start">
-            <div className="relative w-48 h-48 md:w-64 md:h-64 mb-6 rounded-full overflow-hidden shadow-lg border-4 border-primary/20">
+            <div className="relative w-48 h-48 md:w-64 md:h-64 mb-6 rounded-full overflow-hidden shadow-lg border-4 border-primary/20 md:-ml-2">
               <Image
                 src="/me.jpg"
                 alt="Kontham Jagan Mohan Reddy"
