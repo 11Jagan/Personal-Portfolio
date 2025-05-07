@@ -203,5 +203,58 @@ body {
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;
   }
-}
 
+  /* Loading shapes animation */
+  .loading-shapes-container {
+    @apply flex items-center justify-center;
+  }
+
+  .loading-shape {
+    width: 32px; /* Slightly smaller */
+    height: 32px;
+    margin: 10px; /* More spacing */
+  }
+
+  .loading-circle {
+    background-color: hsl(var(--primary));
+    border-radius: 50%;
+    animation: pulse-shape 1.2s infinite ease-in-out;
+  }
+
+  .loading-square {
+    background-color: hsl(var(--accent));
+    animation: pulse-shape 1.2s infinite ease-in-out;
+    animation-delay: 0.15s;
+  }
+
+  .loading-triangle {
+    width: 0;
+    height: 0;
+    background-color: transparent;
+    border-left: 16px solid transparent; /* Adjusted for 32px effective height */
+    border-right: 16px solid transparent;
+    border-bottom: 28px solid hsl(var(--destructive)); /* Approx height sqrt(32^2 - 16^2) */
+    animation: pulse-opacity 1.2s infinite ease-in-out;
+    animation-delay: 0.3s;
+  }
+
+  @keyframes pulse-shape {
+    0%, 100% {
+      transform: scale(0.9);
+      opacity: 0.6;
+    }
+    50% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-opacity {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}

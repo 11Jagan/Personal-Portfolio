@@ -17,7 +17,7 @@ const Header = () => {
       // For in-page hash links, show the loading screen.
       // The Link component will update the URL hash.
       // Scrolling is handled by the LoadingContext after the delay.
-      showLoadingForDuration(3000, href);
+      showLoadingForDuration(1000, href); // Decreased duration to 1000ms
     }
     // For other links (e.g., '/'), allow default Next.js Link behavior and its own loading.tsx.
   };
