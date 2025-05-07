@@ -143,13 +143,15 @@ const ContactSection = () => {
                         <Mail className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
                         <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">konthamjaganmohanredy@gmail.com</a>
                     </div>
-                    <div className="flex items-center space-x-3">
-                        <Smartphone className="h-5 w-5 text-primary" />
-                        <span className="text-foreground/80">+91 8050453043</span>
+                    <div className="flex items-center space-x-3 group">
+                        <Smartphone className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
+                        <a href="tel:+918050453043" className="text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">
+                          +91 8050453043
+                        </a>
                     </div>
-                     <div className="flex items-center space-x-3">
-                        <MapPin className="h-5 w-5 text-primary" />
-                        <span className="text-foreground/80">India</span>
+                     <div className="flex items-center space-x-3 group">
+                        <MapPin className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
+                        <span className="text-foreground/80 interactive-border border-2 border-transparent rounded-md px-1 py-0.5 cursor-default">India</span>
                     </div>
                 </CardContent>
             </Card>
