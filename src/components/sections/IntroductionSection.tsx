@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 const IntroductionSection = () => {
-  const skills = ['HTML', 'CSS', 'JavaScript', 'Bootstrap', 'Node.js', 'Express.js', 'MongoDB', 'React (Learning)', 'Python (Learning)'];
+  const skills = ['HTML', 'CSS', 'JavaScript', 'Bootstrap', 'Node.js', 'Express.js', 'MongoDB', 'React', 'Python', 'SQL'];
 
   return (
     <section id="introduction" className="py-16 md:py-24 bg-background">
@@ -116,7 +116,7 @@ const IntroductionSection = () => {
               </CardHeader>
               <CardContent className="text-base md:text-lg text-foreground/85">
                 <p>
-                  The tech landscape is ever-changing, and I embrace the opportunity to continuously expand my horizons. Currently, I&apos;m deepening my expertise in{' '}
+                  The tech landscape is ever-changing, and I embrace the opportunity to continuously expand my horizons. I am actively working with{' '}
                   <span className="font-semibold text-accent">React</span> and{' '}
                   <span className="font-semibold text-accent">Python</span>, alongside exploring emerging technologies and contributing to vibrant tech communities.
                 </p>
