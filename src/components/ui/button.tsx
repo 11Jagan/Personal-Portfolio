@@ -13,10 +13,10 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground border-transparent", // Removed hover:bg-destructive/90, added border-transparent
         outline:
-          "border-input bg-background hover:text-accent-foreground", // Removed hover:bg-accent, hover:border-accent. border-input provides border-color.
+          "border-input bg-background hover:text-primary", // Changed hover:text-accent-foreground to hover:text-primary for better visibility
         secondary:
           "bg-secondary text-secondary-foreground border-transparent", // Removed hover:bg-secondary/80, added border-transparent
-        ghost: "hover:text-accent-foreground border-transparent", // Removed hover:bg-accent, added border-transparent
+        ghost: "hover:text-primary border-transparent", // Changed hover:text-accent-foreground to hover:text-primary for better visibility
         link: "text-primary underline-offset-4 hover:underline hover:text-accent border-transparent", // Added border-transparent for consistency if border effect is desired
       },
       size: {
