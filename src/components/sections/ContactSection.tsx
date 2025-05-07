@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin } from 'lucide-react';
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react'; // Added Instagram
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -170,6 +171,11 @@ const ContactSection = () => {
                             <Linkedin className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
                         </Link>
                     </Button>
+                    <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
+                        <Link href="https://www.instagram.com/11_jagan_/" target="_blank" rel="noopener noreferrer">
+                            <Instagram className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> Instagram
+                        </Link>
+                    </Button>
                 </CardContent>
             </Card>
           </div>
@@ -180,3 +186,4 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
