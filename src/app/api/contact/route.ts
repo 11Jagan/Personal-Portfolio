@@ -15,13 +15,25 @@ const contactFormSchema = z.object({
 export async function POST(request: NextRequest) {
   console.info("/api/contact POST: Request received at", new Date().toISOString());
 
-  // Check if MongoDB URI is configured AND clientPromise was initialized
-  if (!process.env.MONGODB_URI || !clientPromise) {
-    console.error("CRITICAL_MONGODB_CONFIG: MONGODB_URI is not set or MongoDB clientPromise was not initialized. Ensure MONGODB_URI is set in your .env.local or deployment environment.");
+  // Check if MongoDB URI is configured
+  if (!process.env.MONGODB_URI) {
+    console.error("CRITICAL_MONGODB_CONFIG: MONGODB_URI is not set. Ensure MONGODB_URI is set in your .env.local or deployment environment.");
     return NextResponse.json(
       {
         error: 'Server configuration error.',
         details: 'The database connection is not configured. Please ensure MONGODB_URI is correctly set and contact support if the issue persists.'
+      },
+      { status: 500 }
+    );
+  }
+  
+  // Check if clientPromise was initialized (it might not be if MONGODB_URI was missing at startup)
+  if (!clientPromise) {
+    console.error("CRITICAL_MONGODB_CLIENT_INIT: MongoDB clientPromise was not initialized. This usually means MONGODB_URI was missing or invalid at application startup. Please check your MONGODB_URI and restart the application.");
+    return NextResponse.json(
+      {
+        error: 'Server configuration error.',
+        details: 'The database client could not be initialized. Please check MONGODB_URI and restart the application.'
       },
       { status: 500 }
     );
@@ -47,8 +59,7 @@ export async function POST(request: NextRequest) {
   const { name, email, subject, message } = parsedData.data;
 
   try {
-    // clientPromise is checked above, so it should be a valid Promise<MongoClient> here
-    const awaitedClient = await clientPromise;
+    const awaitedClient = await clientPromise; // clientPromise is now checked
     const db = awaitedClient.db(MONGODB_DB_NAME);
     const collection = db.collection("messages");
 
@@ -60,7 +71,7 @@ export async function POST(request: NextRequest) {
       subject,
       message,
       submittedAt: new Date(),
-      status: "unread", // Optional: to track message status
+      status: "unread", 
     });
 
     if (result.insertedId) {
@@ -84,18 +95,28 @@ export async function POST(request: NextRequest) {
 
     console.error('CRITICAL_ERROR in /api/contact POST handler (MongoDB):', error.message, error.stack, { originalError: error });
     
-    if (error.name === 'MongoNetworkError' || error.message.includes('connect ETIMEDOUT') || error.message.includes('ECONNREFUSED')) {
+    // Specific error checks for MongoDB connection issues
+    if (error.name === 'MongoNetworkError' || 
+        error.message.includes('connect ETIMEDOUT') || 
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('connect ECONNREFUSED') || // Common variant
+        (error.message && error.message.toLowerCase().includes('failed to connect to server')) 
+       ) {
       errorMessage = 'Database connection error.';
-      errorDetails = 'Could not connect to the database server. Please check your MONGODB_URI or try again later.';
+      errorDetails = `Could not connect to the database server: ${error.message}. Please check your MONGODB_URI or try again later.`;
       statusCode = 503; // Service Unavailable
     } else if (error.name === 'MongoServerError') {
       errorMessage = 'Database operation failed.';
       errorDetails = `A database server error occurred: ${error.message}`;
-    } else if (error.message && error.message.includes(' MongoClient ') && error.message.includes('connect')) {
-        // Catching generic MongoClient connection errors that might not be MongoNetworkError
+    } else if (error.message && error.message.includes('MongoClient') && error.message.includes('connect')) {
+        // Catching generic MongoClient connection errors
         errorMessage = 'Database connection error.';
         errorDetails = `Failed to connect to MongoDB: ${error.message}. Please check your MONGODB_URI.`;
         statusCode = 503;
+    } else if (error.message && error.message.includes("Authentication failed")) {
+        errorMessage = 'Database authentication failed.';
+        errorDetails = `Could not authenticate with the database: ${error.message}. Please check your MONGODB_URI credentials.`;
+        statusCode = 401; // Unauthorized
     }
         
     return NextResponse.json(
@@ -107,3 +128,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
