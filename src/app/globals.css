@@ -234,7 +234,7 @@ body {
     border-left: 16px solid transparent; /* Adjusted for 32px effective height */
     border-right: 16px solid transparent;
     border-bottom: 28px solid hsl(var(--destructive)); /* Approx height sqrt(32^2 - 16^2) */
-    animation: pulse-opacity 1.2s infinite ease-in-out;
+    animation: pulse-shape 1.2s infinite ease-in-out; /* Changed from pulse-opacity to pulse-shape */
     animation-delay: 0.3s;
   }
 
@@ -258,3 +258,4 @@ body {
     }
   }
 }
+
