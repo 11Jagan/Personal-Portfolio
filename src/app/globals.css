@@ -106,13 +106,13 @@ body {
   }
   .animated-border::before {
     border: 2px solid transparent;
-    /* Updated gradient to use primary and a different accent shade for more dynamism */
-    border-image: conic-gradient(from var(--angle), hsl(var(--primary)), hsl(var(--accent) / 0.7), hsl(var(--primary))) 1;
+    /* Updated gradient to use primary, accent, destructive and a different accent shade for more dynamism */
+    border-image: conic-gradient(from var(--angle), hsl(var(--primary)), hsl(var(--accent) / 0.7), hsl(var(--destructive) / 0.7), hsl(var(--primary))) 1;
     animation-direction: normal;
   }
    .dark .animated-border::before {
      /* Ensure dark mode also has a vibrant border */
-     border-image: conic-gradient(from var(--angle), hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.6), hsl(var(--primary) / 0.8)) 1;
+     border-image: conic-gradient(from var(--angle), hsl(var(--primary) / 0.8), hsl(var(--accent) / 0.6), hsl(var(--destructive) / 0.6), hsl(var(--primary) / 0.8)) 1;
    }
 
   @property --angle {
@@ -151,7 +151,8 @@ body {
 
   .interactive-border:hover,
   .interactive-border:focus-visible {
-    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary))) 1;
+    /* Updated gradient to include primary, accent, destructive, and loop back to primary */
+    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--destructive)), hsl(var(--primary))) 1;
     animation: rotate 4s linear infinite;
     /* The '1' in border-image-slice makes it fill the border box */
   }
@@ -160,7 +161,8 @@ body {
   .rotate-border {
     --rotate-angle: 0deg; /* Define the initial angle */
     border: 2px solid; /* Keep existing border style for cards */
-    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent))) 1;
+    /* Updated gradient to include primary, accent, destructive, and loop back to primary */
+    border-image: conic-gradient(from var(--rotate-angle), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--destructive)), hsl(var(--primary))) 1;
     animation: rotate 4s linear infinite;
     background-clip: padding-box !important;
   }
@@ -193,3 +195,4 @@ body {
     }
   }
 }
+
