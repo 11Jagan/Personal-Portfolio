@@ -7,7 +7,7 @@ const Footer = () => {
     <footer className="border-t bg-muted/50 py-8">
       <div className="container mx-auto px-4 text-center text-muted-foreground">
         <div className="flex justify-center space-x-6 mb-4">
-          <Link href="mailto:konthamjaganmohanredy@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email" className={cn('p-2 rounded-md interactive-border border-2 border-transparent')}>
+          <Link href="https://mail.google.com/mail/?view=cm&fs=1&to=konthamjaganmohanredy@gmail.com" target="_blank" rel="noopener noreferrer" aria-label="Email" className={cn('p-2 rounded-md interactive-border border-2 border-transparent')}>
             <Mail className="h-6 w-6 hover:text-accent transition-colors" />
           </Link>
           <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className={cn('p-2 rounded-md interactive-border border-2 border-transparent')}>
