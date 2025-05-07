@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -17,9 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react'; // Added Instagram
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useLoading } from '@/contexts/LoadingContext';
 
 const contactFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -32,6 +34,10 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
+  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used here
+  const [isSubmittingState, setIsSubmittingState] = React.useState(false);
+
+
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -40,44 +46,120 @@ const ContactSection = () => {
       subject: "",
       message: "",
     },
+    mode: "onChange", // Validate on change for better UX
   });
 
+  const userEmail = "konthamjaganmohanreddy@gmail.com";
+  const mailtoLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${userEmail}&su=Contact%20from%20Portfolio`;
+
+
   async function onSubmit(data: ContactFormValues) {
-    // Here you would typically send the data to a backend API
-    // For this example, we'll just simulate a successful submission
-    console.log(data);
-    toast({
-      title: "Message Sent!",
-      description: "Thanks for reaching out. I'll get back to you soon.",
-      variant: "default",
-    });
-    form.reset();
+    console.log("ContactSection onSubmit: Form submitted with data:", data);
+    setIsSubmittingState(true);
+    setIsLoading(true); // Show global loader
+    
+    let toastTitle = "Processing...";
+    let toastDescription = "Submitting your message...";
+    let toastVariant: "default" | "destructive" = "default";
+
+    try {
+      console.log("ContactSection onSubmit: Sending POST request to /api/contact");
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      console.log(`ContactSection onSubmit: Received response from /api/contact with status ${response.status}`);
+
+      const responseBodyText = await response.text(); // Get response body as text first
+      console.log("ContactSection onSubmit: Response body text:", responseBodyText.substring(0, 500) + (responseBodyText.length > 500 ? "..." : ""));
+
+
+      if (response.ok) { // HTTP status 200-299
+        form.reset(); 
+        try {
+          const result = JSON.parse(responseBodyText); // Try to parse as JSON
+          console.log("ContactSection onSubmit: Parsed successful API JSON response:", result);
+          toastTitle = "Message Sent!";
+          toastDescription = result.message || "Your message has been processed successfully by the API.";
+          toastVariant = "default";
+        } catch (e) {
+          // This case should ideally not happen if API guarantees JSON on success
+          console.warn("ContactSection onSubmit: Could not parse JSON from successful-status response from /api/contact. This is unexpected.", { status: response.status, body: responseBodyText, error: e });
+          toastTitle = "Message Processed (Unexpected Format)";
+          toastDescription = `Server sent success status (${response.status}) but the response was not valid JSON. Content: ${responseBodyText.substring(0,100)}...`;
+          toastVariant = "destructive"; // Treat as an issue needing investigation
+        }
+      } else { // Handle HTTP errors (e.g., 400, 500)
+        toastTitle = "Submission Error";
+        toastVariant = "destructive";
+        try {
+          const errorResult = JSON.parse(responseBodyText); // Try to parse as JSON
+          console.warn("ContactSection onSubmit: Parsed API error JSON response:", errorResult);
+          toastDescription = errorResult.error || errorResult.message || `Server responded with status ${response.status}.`;
+          if (errorResult.details) {
+             toastDescription += ` Details: ${typeof errorResult.details === 'string' ? errorResult.details : JSON.stringify(errorResult.details)}`;
+             console.warn("ContactSection onSubmit: Error details from API:", errorResult.details);
+          }
+        } catch (e) { // Catch block for JSON.parse if responseBodyText is not JSON (e.g. HTML error page)
+          console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
+          if (responseBodyText.toLowerCase().includes("<html")) {
+             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
+             console.error("ContactSection onSubmit: HTML Error Page Snippet from /api/contact:", responseBodyText.substring(0, 300));
+          } else {
+            toastDescription = responseBodyText.trim() || `Server error: ${response.status}. The response was not in the expected JSON format. Please try again.`;
+          }
+        }
+      }
+    } catch (error) { // Catch network errors or other client-side issues before/during fetch
+      console.error("ContactSection onSubmit: Network or client-side error during contact form submission:", error);
+      toastTitle = "Network Error";
+      toastVariant = "destructive";
+      toastDescription = "Failed to send message. Please check your network connection or try again later.";
+      if (error instanceof Error) {
+         toastDescription = `Client-side error: ${error.message || "An unexpected error occurred."}`;
+      }
+    } finally {
+      console.log("ContactSection onSubmit: Displaying toast:", { title: toastTitle, description: toastDescription, variant: toastVariant });
+      toast({
+        title: toastTitle,
+        description: toastDescription,
+        variant: toastVariant,
+        duration: toastVariant === "destructive" ? 8000 : 5000,
+      });
+      setIsLoading(false); // Hide global loader
+      setIsSubmittingState(false);
+    }
   }
+  
+  const isButtonDisabled = isSubmittingState; // Simpler condition, form.formState.isSubmitting is often redundant with manual state
 
   return (
-    <section id="contact" className="py-12 md:py-20">
+    <section id="contact" className="py-10 sm:py-12 md:py-16 lg:py-20">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-primary">Get In Touch</h2>
-        <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-          Have a project in mind, a question, or just want to say hi? Feel free to reach out. I&apos;m always open to discussing new opportunities and collaborations.
+        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-primary animate-slideUpFadeIn opacity-0" style={{animationDelay: '0ms', animationFillMode: 'forwards'}}>Get In Touch</h2>
+        <p className="text-md sm:text-lg text-muted-foreground text-center mb-10 md:mb-12 max-w-xl mx-auto animate-slideUpFadeIn opacity-0" style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
+          Have a project in mind, a question, or just want to say hi? Feel free to reach out. I&apos;ll do my best to respond within 24 hours.
         </p>
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="lg:col-span-2 animate-slideUpFadeIn opacity-0" style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
-              <CardHeader>
-                <CardTitle className="text-2xl">Send me a message</CardTitle>
-                <CardDescription>I&apos;ll do my best to respond within 24 hours.</CardDescription>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
+                <CardDescription className="text-sm sm:text-base">I&apos;ll do my best to respond within 24 hours.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid sm:grid-cols-2 gap-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+                    <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                       <FormField
                         control={form.control}
                         name="name"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel className="text-sm">Full Name</FormLabel>
                             <FormControl>
                               <Input placeholder="Kontham Jagan Mohan Reddy" {...field} />
                             </FormControl>
@@ -90,9 +172,9 @@ const ContactSection = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address</FormLabel>
+                            <FormLabel className="text-sm">Email Address</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="konthamjaganmohanredy@gmail.com" {...field} />
+                              <Input type="email" placeholder="konthamjaganmohanreddy@gmail.com" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -104,7 +186,7 @@ const ContactSection = () => {
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Subject</FormLabel>
+                          <FormLabel className="text-sm">Subject</FormLabel>
                           <FormControl>
                             <Input placeholder="Project Inquiry" {...field} />
                           </FormControl>
@@ -117,63 +199,63 @@ const ContactSection = () => {
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Your Message</FormLabel>
+                          <FormLabel className="text-sm">Your Message</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Hi Jagan, I'd like to discuss..." rows={5} {...field} />
+                            <Textarea placeholder="Hi Jagan, I'd like to discuss..." rows={4} {...field} />
                           </FormControl>
                             <FormMessage />
                           </FormItem>
                       )}
                     />
-                    <Button type="submit" className={cn("w-full sm:w-auto group", "interactive-border")} disabled={form.formState.isSubmitting}>
-                      {form.formState.isSubmitting ? 'Sending...' : 'Send Message'}
-                      {!form.formState.isSubmitting && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
+                    <Button type="submit" className={cn("w-full sm:w-auto group", "interactive-border")} disabled={isButtonDisabled}>
+                      {isButtonDisabled ? 'Sending...' : 'Send Message'}
+                      {!isButtonDisabled && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </Button>
                   </form>
                 </Form>
               </CardContent>
             </Card>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-6 animate-slideUpFadeIn opacity-0" style={{animationDelay: '600ms', animationFillMode: 'forwards'}}>
              <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                    <CardTitle className="text-xl">Contact Details</CardTitle>
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Contact Details</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-3 group">
-                        <Mail className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
-                        <a href="mailto:konthamjaganmohanredy@gmail.com" className="text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">konthamjaganmohanredy@gmail.com</a>
+                <CardContent className="space-y-3 p-4 sm:p-6">
+                    <div className="flex items-center space-x-2 sm:space-x-3 group">
+                        <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" />
+                        <a href={mailtoLink} target="_blank" rel="noopener noreferrer" className="text-sm sm:text-base text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">konthamjaganmohanreddy@gmail.com</a>
                     </div>
-                    <div className="flex items-center space-x-3 group">
-                        <Smartphone className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
-                        <a href="tel:+918050453043" className="text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">
+                    <div className="flex items-center space-x-2 sm:space-x-3 group">
+                        <Smartphone className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" />
+                        <a href="tel:+918050453043" className="text-sm sm:text-base text-foreground/80 hover:text-accent transition-colors interactive-border border-2 border-transparent rounded-md px-1 py-0.5">
                           +91 8050453043
                         </a>
                     </div>
-                     <div className="flex items-center space-x-3 group">
-                        <MapPin className="h-5 w-5 text-primary group-hover:text-accent transition-colors" />
-                        <span className="text-foreground/80 interactive-border border-2 border-transparent rounded-md px-1 py-0.5 cursor-default">India</span>
+                     <div className="flex items-center space-x-2 sm:space-x-3 group">
+                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" />
+                        <span className="text-sm sm:text-base text-foreground/80 interactive-border border-2 border-transparent rounded-md px-1 py-0.5 cursor-default">India</span>
                     </div>
                 </CardContent>
             </Card>
             <Card className="shadow-lg group hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                    <CardTitle className="text-xl">Connect With Me</CardTitle>
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">Connect With Me</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                     <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
+                <CardContent className="space-y-2 sm:space-y-3 p-4 sm:p-6">
+                     <Button variant="outline" className={cn("w-full justify-start group text-sm sm:text-base", "interactive-border")} asChild>
                         <Link href="https://github.com/11Jagan" target="_blank" rel="noopener noreferrer">
-                            <Github className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> GitHub
+                            <Github className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" /> GitHub
                         </Link>
                     </Button>
-                     <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
+                     <Button variant="outline" className={cn("w-full justify-start group text-sm:text-base", "interactive-border")} asChild>
                         <Link href="https://linkedin.com/in/jagan-mohan-reddy-kontham-445250293/" target="_blank" rel="noopener noreferrer">
-                            <Linkedin className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
+                            <Linkedin className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" /> LinkedIn
                         </Link>
                     </Button>
-                    <Button variant="outline" className={cn("w-full justify-start group", "interactive-border")} asChild>
+                    <Button variant="outline" className={cn("w-full justify-start group text-sm sm:text-base", "interactive-border")} asChild>
                         <Link href="https://www.instagram.com/11_jagan_/" target="_blank" rel="noopener noreferrer">
-                            <Instagram className="mr-2 h-5 w-5 text-primary group-hover:text-accent transition-colors" /> Instagram
+                            <Instagram className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-accent transition-colors" /> Instagram
                         </Link>
                     </Button>
                 </CardContent>
@@ -186,4 +268,3 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
-
