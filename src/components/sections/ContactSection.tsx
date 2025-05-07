@@ -34,7 +34,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used here
+  const { setIsLoading } = useLoading();
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
 
 
@@ -46,7 +46,7 @@ const ContactSection = () => {
       subject: "",
       message: "",
     },
-    mode: "onChange", // Validate on change for better UX
+    mode: "onChange",
   });
 
   const userEmail = "konthamjaganmohanreddy@gmail.com";
@@ -56,7 +56,7 @@ const ContactSection = () => {
   async function onSubmit(data: ContactFormValues) {
     console.log("ContactSection onSubmit: Form submitted with data:", data);
     setIsSubmittingState(true);
-    setIsLoading(true); // Show global loader
+    setIsLoading(true); 
     
     let toastTitle = "Processing...";
     let toastDescription = "Submitting your message...";
@@ -73,37 +73,36 @@ const ContactSection = () => {
       });
       console.log(`ContactSection onSubmit: Received response from /api/contact with status ${response.status}`);
 
-      const responseBodyText = await response.text(); // Get response body as text first
+      const responseBodyText = await response.text(); 
       console.log("ContactSection onSubmit: Response body text:", responseBodyText.substring(0, 500) + (responseBodyText.length > 500 ? "..." : ""));
 
 
-      if (response.ok) { // HTTP status 200-299
+      if (response.ok) { 
         form.reset(); 
         try {
-          const result = JSON.parse(responseBodyText); // Try to parse as JSON
+          const result = JSON.parse(responseBodyText); 
           console.log("ContactSection onSubmit: Parsed successful API JSON response:", result);
           toastTitle = "Message Sent!";
-          toastDescription = result.message || "Your message has been processed successfully by the API.";
+          toastDescription = result.message || "Your message has been successfully submitted.";
           toastVariant = "default";
         } catch (e) {
-          // This case should ideally not happen if API guarantees JSON on success
-          console.warn("ContactSection onSubmit: Could not parse JSON from successful-status response from /api/contact. This is unexpected.", { status: response.status, body: responseBodyText, error: e });
+          console.warn("ContactSection onSubmit: Could not parse JSON from successful-status response. Body:", responseBodyText, "Error:", e);
           toastTitle = "Message Processed (Unexpected Format)";
           toastDescription = `Server sent success status (${response.status}) but the response was not valid JSON. Content: ${responseBodyText.substring(0,100)}...`;
-          toastVariant = "destructive"; // Treat as an issue needing investigation
+          toastVariant = "destructive"; 
         }
-      } else { // Handle HTTP errors (e.g., 400, 500)
+      } else { 
         toastTitle = "Submission Error";
         toastVariant = "destructive";
         try {
-          const errorResult = JSON.parse(responseBodyText); // Try to parse as JSON
+          const errorResult = JSON.parse(responseBodyText); 
           console.warn("ContactSection onSubmit: Parsed API error JSON response:", errorResult);
           toastDescription = errorResult.error || errorResult.message || `Server responded with status ${response.status}.`;
           if (errorResult.details) {
              toastDescription += ` Details: ${typeof errorResult.details === 'string' ? errorResult.details : JSON.stringify(errorResult.details)}`;
              console.warn("ContactSection onSubmit: Error details from API:", errorResult.details);
           }
-        } catch (e) { // Catch block for JSON.parse if responseBodyText is not JSON (e.g. HTML error page)
+        } catch (e) { 
           console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
           if (responseBodyText.toLowerCase().includes("<html")) {
              toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
@@ -113,7 +112,7 @@ const ContactSection = () => {
           }
         }
       }
-    } catch (error) { // Catch network errors or other client-side issues before/during fetch
+    } catch (error) { 
       console.error("ContactSection onSubmit: Network or client-side error during contact form submission:", error);
       toastTitle = "Network Error";
       toastVariant = "destructive";
@@ -129,12 +128,12 @@ const ContactSection = () => {
         variant: toastVariant,
         duration: toastVariant === "destructive" ? 8000 : 5000,
       });
-      setIsLoading(false); // Hide global loader
+      setIsLoading(false); 
       setIsSubmittingState(false);
     }
   }
   
-  const isButtonDisabled = isSubmittingState; // Simpler condition, form.formState.isSubmitting is often redundant with manual state
+  const isButtonDisabled = isSubmittingState;
 
   return (
     <section id="contact" className="py-10 sm:py-12 md:py-16 lg:py-20">
@@ -148,7 +147,7 @@ const ContactSection = () => {
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">I&apos;ll do my best to respond within 24 hours.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Your message will be saved to our database.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
