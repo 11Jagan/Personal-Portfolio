@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram, AlertCircle } from 'lucide-react';
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLoading } from '@/contexts/LoadingContext';
@@ -34,7 +34,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading, showLoadingForDuration } = useLoading();
+  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used directly here
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
 
 
@@ -49,14 +49,14 @@ const ContactSection = () => {
     mode: "onChange", 
   });
 
-  const recipientEmail = "konthamjaganmohanreddy@gmail.com"; // For display and direct mailto link
+  const recipientEmail = "konthamjaganmohanreddy@gmail.com";
   const mailtoLinkDirect = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipientEmail}&su=Contact%20from%20Portfolio`;
 
 
   async function onSubmit(data: ContactFormValues) {
     console.log("ContactSection onSubmit: Attempting to send data to /api/contact:", data);
     setIsSubmittingState(true);
-    setIsLoading(true); // Context loading
+    setIsLoading(true); 
 
     let toastTitle = "Processing...";
     let toastDescription = "Your message is being sent.";
@@ -71,7 +71,7 @@ const ContactSection = () => {
         body: JSON.stringify(data),
       });
 
-      const responseBodyText = await response.text(); // Get text first to handle non-JSON responses
+      const responseBodyText = await response.text(); 
       
       if (response.ok) {
         try {
@@ -84,20 +84,23 @@ const ContactSection = () => {
             console.error("ContactSection onSubmit: API response was OK, but not valid JSON:", responseBodyText, e);
             toastTitle = "Message Sent (with warning)";
             toastDescription = "Your message was likely processed, but the server sent an unexpected confirmation. Body: " + responseBodyText.substring(0,100);
-            toastVariant = "default"; // Or a custom warning variant
         }
       } else {
-        // Handle non-OK responses (4xx, 5xx)
         toastTitle = "Submission Error";
         toastVariant = "destructive";
         try {
           const errorResult = JSON.parse(responseBodyText);
           console.error("ContactSection onSubmit: Error response from API (JSON):", errorResult);
-          toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server.";
-          if (errorResult.details && typeof errorResult.details === 'object') {
-            // If Zod errors are returned
+
+          if (typeof errorResult === 'object' && errorResult !== null && Object.keys(errorResult).length === 0 && errorResult.constructor === Object) {
+            toastDescription = "The server returned an empty error response. This often indicates a server-side misconfiguration (e.g., database connection string MONGODB_URI in .env.local might be missing, incorrect, or the DB server is down) or an unhandled error on the server. Please check the server console logs for more details or contact the site administrator.";
+          } else {
+            toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server.";
+          }
+          
+          if (errorResult.details && typeof errorResult.details === 'object' && !(typeof errorResult === 'object' && errorResult !== null && Object.keys(errorResult).length === 0 && errorResult.constructor === Object) ) {
              const errorMessages = Object.values(errorResult.details)
-                .flatMap((field: any) => field._errors)
+                .flatMap((field: any) => field._errors || (typeof field === 'string' ? [field] : [])) 
                 .join(" ");
              if (errorMessages) toastDescription += ` Details: ${errorMessages}`;
           }
