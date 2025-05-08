@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from "react";
@@ -18,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react';
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram, Menu, X } from 'lucide-react';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLoading } from '@/contexts/LoadingContext';
@@ -34,7 +35,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading, showLoadingForDuration } = useLoading();
+  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
   const formRef = React.useRef<HTMLFormElement>(null);
 
@@ -65,7 +66,7 @@ const ContactSection = () => {
     }
 
     setIsSubmittingState(true);
-    setIsLoading(true); // Show global loading indicator
+    setIsLoading(true); 
 
     const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
     const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
@@ -75,7 +76,7 @@ const ContactSection = () => {
       console.error("EmailJS environment variables are not set. Ensure NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, and NEXT_PUBLIC_EMAILJS_USER_ID are in your .env.local file.");
       toast({
         title: "Configuration Error",
-        description: "Email service is not configured correctly. Please contact the administrator.",
+        description: "Email sending is not configured. Please ensure NEXT_PUBLIC_EMAILJS_SERVICE_ID, TEMPLATE_ID, and USER_ID are correctly set in your .env.local file. Refer to README.md for setup instructions.",
         variant: "destructive",
         duration: 10000,
       });
@@ -84,18 +85,15 @@ const ContactSection = () => {
       return;
     }
     
-    // The templateParams object should match the variables used in your EmailJS template
     const templateParams = {
       from_name: data.name,
       from_email: data.email,
       subject: data.subject,
       message: data.message,
-      to_name: "Jagan Mohan Reddy", // Or your name as configured in EmailJS template
+      to_name: "Jagan Mohan Reddy", 
     };
 
-
     try {
-      // Using emailjs.send() as sendForm might not work well with React Hook Form's virtual DOM
       await emailjs.send(serviceId, templateId, templateParams, userId);
       
       console.log("ContactSection onSubmit: EmailJS send success");
@@ -110,13 +108,13 @@ const ContactSection = () => {
       console.error("ContactSection onSubmit: EmailJS send failed:", error);
       toast({
         title: "Submission Error",
-        description: `Failed to send message: ${error?.text || error?.message || 'Unknown error'}. Please try again.`,
+        description: `Failed to send message: ${error?.text || error?.message || 'Unknown error'}. Please try again or use another contact method.`,
         variant: "destructive",
         duration: 10000,
       });
     } finally {
       setIsSubmittingState(false);
-      setIsLoading(false); // Hide global loading indicator
+      setIsLoading(false);
     }
   }
   
@@ -143,7 +141,6 @@ const ContactSection = () => {
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
-                  {/* Pass the ref to the form element */}
                   <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                     <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                       <FormField
