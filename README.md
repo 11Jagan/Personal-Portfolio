@@ -7,15 +7,12 @@ To get started, take a look at src/app/page.tsx.
 
 ## Environment Variables
 
-This project's contact form uses EmailJS to send messages directly from the client-side.
-
 Create a `.env.local` file in the root of your project:
 
 ```env
-# EmailJS Configuration (Required for Contact Form)
-# NEXT_PUBLIC_EMAILJS_SERVICE_ID="YOUR_EMAILJS_SERVICE_ID"
-# NEXT_PUBLIC_EMAILJS_TEMPLATE_ID="YOUR_EMAILJS_TEMPLATE_ID"
-# NEXT_PUBLIC_EMAILJS_USER_ID="YOUR_EMAILJS_USER_ID" # (Public Key)
+# MongoDB Configuration (Required for Contact Form)
+MONGODB_URI="YOUR_MONGODB_CONNECTION_STRING"
+MONGODB_DB_NAME="YOUR_MONGODB_DATABASE_NAME" # e.g., portfolio_messages
 
 # Google Generative AI API Key (if using Genkit with Google AI models)
 # GOOGLE_GENAI_API_KEY="YOUR_GOOGLE_GENAI_API_KEY"
@@ -30,9 +27,10 @@ Create a `.env.local` file in the root of your project:
 ```
 
 **Important Notes for Contact Form & `.env.local`:**
--   **Contact Form:** The contact form uses [EmailJS](https://www.emailjs.com/) to send emails. You **MUST** create an EmailJS account, set up an email service (e.g., Gmail), and create an email template.
-    -   Replace `YOUR_EMAILJS_SERVICE_ID`, `YOUR_EMAILJS_TEMPLATE_ID`, and `YOUR_EMAILJS_USER_ID` (this is your Public Key from EmailJS account settings) with your actual EmailJS credentials.
-    -   The template you create in EmailJS should include variables that match the form fields (e.g., `{{from_name}}`, `{{from_email}}`, `{{subject}}`, `{{message}}`). The `ContactSection.tsx` component sends these parameters.
+-   **Contact Form:** The contact form uses a backend API route (`/api/contact`) to save messages to a MongoDB database.
+    -   You **MUST** set up a MongoDB database (e.g., using MongoDB Atlas free tier).
+    -   Replace `YOUR_MONGODB_CONNECTION_STRING` with your actual MongoDB connection string.
+    -   Replace `YOUR_MONGODB_DATABASE_NAME` with the name of the database you want to use (e.g., `portfolio_jmr`). Messages will be stored in a collection named `messages` within this database.
 -   The `GOOGLE_GENAI_API_KEY` is needed if you intend to use Genkit with Google AI models.
 -   Fill in the Firebase credentials only if you are implementing features that require them.
 -   **Never commit your `.env.local` file to a public repository.** It is included in `.gitignore` by default.
@@ -47,20 +45,20 @@ yarn dev
 pnpm dev
 ```
 
-If you are deploying this application, ensure your EmailJS account and templates are correctly configured for the production environment.
+If you are deploying this application, ensure your MongoDB database is accessible from your deployment environment and the environment variables are correctly set.
 
 ## Troubleshooting
 
 ### Contact Form Submissions
 
--   **EmailJS Configuration:**
-    -   Ensure `NEXT_PUBLIC_EMAILJS_SERVICE_ID`, `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID`, and `NEXT_PUBLIC_EMAILJS_USER_ID` are correctly set in your `.env.local` file and that you've restarted your development server.
-    -   Verify your EmailJS service and template are set up correctly in your EmailJS dashboard. Check that the template variables match what `ContactSection.tsx` sends.
-    -   Check your EmailJS account dashboard for any errors or usage limits.
--   **Console Errors:** Open your browser's developer console (usually F12) and check for any error messages when you submit the form.
+-   **MongoDB Configuration:**
+    -   Ensure `MONGODB_URI` and `MONGODB_DB_NAME` are correctly set in your `.env.local` file and that you've restarted your development server.
+    -   Verify your MongoDB connection string is correct and allows connections from your application's IP address (especially if using MongoDB Atlas, check IP Access List).
+    -   Check your MongoDB server logs for any connection errors.
+-   **Console Errors:** Open your browser's developer console (usually F12) and the terminal running your Next.js dev server. Check for any error messages when you submit the form.
 -   **Toast Notifications:**
     -   The website provides toast notifications upon form submission (e.g., "Message Sent!", "Submission Error"). These give clues about the outcome.
 
 ### Mailto Links (Direct Contact Methods)
 
-The "Contact Details" card and the footer still contain direct `mailto:` links (e.g., for the email icon). These will open the visitor's default email application and are independent of the EmailJS contact form.
+The "Contact Details" card and the footer still contain direct `mailto:` links (e.g., for the email icon). These will open the visitor's default email application and are independent of the MongoDB-backed contact form.

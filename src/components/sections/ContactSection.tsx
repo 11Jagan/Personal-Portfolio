@@ -5,7 +5,6 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import emailjs from '@emailjs/browser';
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram, Menu, X } from 'lucide-react';
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLoading } from '@/contexts/LoadingContext';
@@ -35,10 +34,9 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used
+  const { setIsLoading } = useLoading();
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
-  const formRef = React.useRef<HTMLFormElement>(null);
-
+  
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -54,61 +52,78 @@ const ContactSection = () => {
   const mailtoLinkDirect = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipientEmail}&su=Contact%20from%20Portfolio`;
 
   async function onSubmit(data: ContactFormValues) {
-    console.log("ContactSection onSubmit: Attempting to send email via EmailJS with data:", data);
-    if (!formRef.current) {
-      console.error("ContactSection onSubmit: Form reference is not available.");
-      toast({
-        title: "Form Error",
-        description: "Could not submit the form. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    console.log("ContactSection onSubmit: Attempting to send data to API:", data);
     setIsSubmittingState(true);
-    setIsLoading(true); 
-
-    const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
-    const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
-    const userId = process.env.NEXT_PUBLIC_EMAILJS_USER_ID;
-
-    if (!serviceId || !templateId || !userId) {
-      console.error("EmailJS environment variables are not set. Ensure NEXT_PUBLIC_EMAILJS_SERVICE_ID, NEXT_PUBLIC_EMAILJS_TEMPLATE_ID, and NEXT_PUBLIC_EMAILJS_USER_ID are in your .env.local file.");
-      toast({
-        title: "Configuration Error",
-        description: "Email sending is not configured. Please ensure NEXT_PUBLIC_EMAILJS_SERVICE_ID, TEMPLATE_ID, and USER_ID are correctly set in your .env.local file. Refer to README.md for setup instructions.",
-        variant: "destructive",
-        duration: 10000,
-      });
-      setIsSubmittingState(false);
-      setIsLoading(false);
-      return;
-    }
-    
-    const templateParams = {
-      from_name: data.name,
-      from_email: data.email,
-      subject: data.subject,
-      message: data.message,
-      to_name: "Jagan Mohan Reddy", 
-    };
+    setIsLoading(true);
 
     try {
-      await emailjs.send(serviceId, templateId, templateParams, userId);
-      
-      console.log("ContactSection onSubmit: EmailJS send success");
-      toast({
-        title: "Message Sent!",
-        description: "Your message has been successfully sent. I'll get back to you soon.",
-        variant: "default",
-        duration: 7000,
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
       });
-      form.reset();
+
+      const responseBodyText = await response.text(); // Get response as text first
+
+      if (response.ok) {
+        try {
+          const result = JSON.parse(responseBodyText); // Try to parse as JSON
+          console.log("ContactSection onSubmit: API success response:", result);
+          toast({
+            title: "Message Sent!",
+            description: result.message || "Your message has been successfully sent.",
+            variant: "default",
+            duration: 7000,
+          });
+          form.reset();
+        } catch (e) {
+           // If JSON.parse fails, it means the OK response was not JSON
+           console.error("ContactSection onSubmit: API success response was not valid JSON:", responseBodyText, e);
+           toast({
+            title: "Message Sent!",
+            description: "Your message has been sent, but the server's confirmation was not in the expected format.",
+            variant: "default", // Still a success, but with a note
+            duration: 7000,
+          });
+          form.reset();
+        }
+      } else {
+        let toastDescription = "An unexpected error occurred.";
+        try {
+          const errorResult = JSON.parse(responseBodyText);
+          console.error("ContactSection onSubmit: Error response from API (JSON):", errorResult);
+          toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server.";
+          if (errorResult.details && typeof errorResult.details === 'object') {
+            // If Zod errors are returned
+            const fieldErrors = Object.values(errorResult.details).flat().join(' ');
+            if (fieldErrors) toastDescription += ` Details: ${fieldErrors}`;
+          }
+        } catch (e) { 
+          // If response is not JSON (e.g. HTML error page from server)
+          console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
+          if (responseBodyText.toLowerCase().includes("<html")) {
+             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
+             console.error("ContactSection onSubmit: HTML Error Page Snippet from /api/contact:", responseBodyText.substring(0, 300));
+          } else if (responseBodyText.trim()) {
+            toastDescription = `Server error (status ${response.status}): ${responseBodyText.substring(0,100)}${responseBodyText.length > 100 ? '...' : ''}`;
+          } else {
+            toastDescription = `Server error (status ${response.status}): An empty or non-JSON response was received. Please check server logs.`;
+          }
+        }
+        toast({
+          title: "Submission Error",
+          description: toastDescription,
+          variant: "destructive",
+          duration: 10000,
+        });
+      }
     } catch (error: any) {
-      console.error("ContactSection onSubmit: EmailJS send failed:", error);
+      console.error("ContactSection onSubmit: Network or fetch error:", error);
       toast({
-        title: "Submission Error",
-        description: `Failed to send message: ${error?.text || error?.message || 'Unknown error'}. Please try again or use another contact method.`,
+        title: "Network Error",
+        description: `Failed to send message: ${error?.message || 'Please check your internet connection and try again.'}`,
         variant: "destructive",
         duration: 10000,
       });
@@ -137,11 +152,11 @@ const ContactSection = () => {
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Your message will be sent directly to my inbox.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Your message will be stored and I'll get back to you.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
-                  <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                     <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                       <FormField
                         control={form.control}
@@ -200,6 +215,7 @@ const ContactSection = () => {
                       type="submit" 
                       className={cn("w-full sm:w-auto group", "interactive-border")} 
                       disabled={isButtonDisabled}
+                      isLoading={isButtonDisabled}
                     >
                       {isButtonDisabled ? 'Sending...' : 'Send Message'}
                       {!isButtonDisabled && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
