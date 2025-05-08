@@ -45,26 +45,34 @@ export async function POST(request: NextRequest) {
         data: { id: result.insertedId, ...parsedData.data }
       }, { status: 200 });
     } else {
-      console.error("API: Failed to insert message into MongoDB");
-      return NextResponse.json({ error: 'Failed to store message in database.' }, { status: 500 });
+      // This case should ideally not be reached if insertOne throws an error on failure,
+      // but as a fallback.
+      console.error("API: Failed to insert message into MongoDB (no insertedId returned).");
+      return NextResponse.json({ error: 'Failed to store message in database due to an unexpected issue.' }, { status: 500 });
     }
 
   } catch (error: any) {
-    console.error('API Route Error:', error);
-    let errorMessage = 'Internal Server Error.';
-    if (error.name === 'MongoNetworkError') {
-      errorMessage = 'Database connection error. Please check your MONGODB_URI and network access rules.';
-    } else if (error.message) {
+    console.error('API Route Error:', error); // Log the full error on the server
+
+    let errorMessage = 'Internal Server Error. Please try again later.'; // Default user-facing message
+
+    // Check for specific error types or properties to provide more context
+    if (error.name === 'MongoNetworkError' || (error.message && error.message.toLowerCase().includes('mongo'))) {
+      errorMessage = 'Database connection error. Please check your MONGODB_URI, network access rules, and database status.';
+    } else if (error.message && typeof error.message === 'string' && error.message.trim() !== '') {
+      // Use the error's message if it's a non-empty string
       errorMessage = error.message;
     }
     
-    // Check if MONGODB_URI is missing, as it's a common setup issue
-    if (!process.env.MONGODB_URI) {
-        console.error("API Route Error: MONGODB_URI environment variable is not set.");
-        errorMessage = "Server configuration error: Database URI is missing. Please contact the administrator.";
+    // Override with a more specific message if environment variables are missing, as this is a common setup issue.
+    if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
+        console.error("API Route Critical Error: MONGODB_URI or MONGODB_DB_NAME environment variable is not set.");
+        errorMessage = "Server configuration error: Database connection details are missing. Please contact the administrator.";
     }
+    
+    // Ensure errorMessage is always a non-empty string before sending
+    const finalErrorMessage = (typeof errorMessage === 'string' && errorMessage.trim() !== '') ? errorMessage : 'An unexpected server error occurred.';
 
-
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ error: finalErrorMessage }, { status: 500 });
   }
 }
