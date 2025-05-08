@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       subject,
       message,
       submittedAt: new Date(),
+      status: "unread", // Default status for new messages
     });
 
     if (result.insertedId) {
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     console.error('API Route Error:', error);
     let errorMessage = 'Internal Server Error.';
     if (error.name === 'MongoNetworkError') {
-      errorMessage = 'Database connection error. Please try again later.';
+      errorMessage = 'Database connection error. Please check your MONGODB_URI and network access rules.';
     } else if (error.message) {
       errorMessage = error.message;
     }
