@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Check for specific error types or properties to provide more context
     if (error.name === 'MongoNetworkError' || (error.message && error.message.toLowerCase().includes('mongo'))) {
-      errorMessage = 'Database connection error. Please check your MONGODB_URI, network access rules, and database status.';
+      errorMessage = 'Database connection error. Please verify your MONGODB_URI in .env.local, check network access rules in MongoDB Atlas (if applicable), and ensure your database server is running.';
     } else if (error.message && typeof error.message === 'string' && error.message.trim() !== '') {
       // Use the error's message if it's a non-empty string
       errorMessage = error.message;
@@ -66,8 +66,8 @@ export async function POST(request: NextRequest) {
     
     // Override with a more specific message if environment variables are missing, as this is a common setup issue.
     if (!process.env.MONGODB_URI || !process.env.MONGODB_DB_NAME) {
-        console.error("API Route Critical Error: MONGODB_URI or MONGODB_DB_NAME environment variable is not set.");
-        errorMessage = "Server configuration error: Database connection details are missing. Please contact the administrator.";
+        console.error("API Route Critical Error: MONGODB_URI or MONGODB_DB_NAME environment variable is not set in .env.local.");
+        errorMessage = "Server configuration error: Database connection details (MONGODB_URI or MONGODB_DB_NAME) are missing in .env.local. Please contact the administrator or check your server setup.";
     }
     
     // Ensure errorMessage is always a non-empty string before sending
@@ -76,3 +76,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: finalErrorMessage }, { status: 500 });
   }
 }
+
