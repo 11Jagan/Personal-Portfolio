@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram } from 'lucide-react';
+import { Mail, Linkedin, Github, Send, Smartphone, MapPin, Instagram, AlertCircle } from 'lucide-react';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLoading } from '@/contexts/LoadingContext';
@@ -34,7 +34,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading } = useLoading(); // Use setIsLoading for managing loading state
+  const { setIsLoading, showLoadingForDuration } = useLoading();
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
 
 
@@ -46,52 +46,88 @@ const ContactSection = () => {
       subject: "",
       message: "",
     },
-    mode: "onChange", // Validate on change for better UX
+    mode: "onChange", 
   });
 
-  const recipientEmail = "konthamjaganmohanreddy@gmail.com";
+  const recipientEmail = "konthamjaganmohanreddy@gmail.com"; // For display and direct mailto link
   const mailtoLinkDirect = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipientEmail}&su=Contact%20from%20Portfolio`;
 
-  async function onSubmit(data: ContactFormValues) {
-    console.log("ContactSection onSubmit: Preparing mailto link with data:", data);
-    setIsSubmittingState(true);
-    setIsLoading(true); 
 
-    const { name, email, subject, message } = data;
-    
-    const mailtoBody = `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`;
-    const mailtoSubject = `Portfolio Contact: ${subject}`;
-    const mailtoHref = `mailto:${recipientEmail}?subject=${encodeURIComponent(mailtoSubject)}&body=${encodeURIComponent(mailtoBody)}`;
+  async function onSubmit(data: ContactFormValues) {
+    console.log("ContactSection onSubmit: Attempting to send data to /api/contact:", data);
+    setIsSubmittingState(true);
+    setIsLoading(true); // Context loading
+
+    let toastTitle = "Processing...";
+    let toastDescription = "Your message is being sent.";
+    let toastVariant: "default" | "destructive" = "default";
 
     try {
-      // Attempt to open the mail client
-      window.location.href = mailtoHref;
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseBodyText = await response.text(); // Get text first to handle non-JSON responses
       
-      toast({
-        title: "Opening Email Client",
-        description: "Please complete sending your message through your email application.",
-        variant: "default", // 'default' is typically blue/neutral, not green for success.
-        duration: 7000, // Increased duration
-      });
-      form.reset(); // Reset form fields after attempting to open mail client
-    } catch (error) {
-      console.error("ContactSection onSubmit: Error trying to open mailto link:", error);
-      toast({
-        title: "Error Opening Email Client",
-        description: "Could not automatically open your email client. Please manually copy the email address and send your message.",
-        variant: "destructive",
-        duration: 10000, // Longer duration for error messages
-      });
+      if (response.ok) {
+        try {
+            const result = JSON.parse(responseBodyText);
+            console.log("ContactSection onSubmit: Success response from API:", result);
+            toastTitle = "Message Sent!";
+            toastDescription = result.message || "Your message has been successfully submitted.";
+            form.reset();
+        } catch (e) {
+            console.error("ContactSection onSubmit: API response was OK, but not valid JSON:", responseBodyText, e);
+            toastTitle = "Message Sent (with warning)";
+            toastDescription = "Your message was likely processed, but the server sent an unexpected confirmation. Body: " + responseBodyText.substring(0,100);
+            toastVariant = "default"; // Or a custom warning variant
+        }
+      } else {
+        // Handle non-OK responses (4xx, 5xx)
+        toastTitle = "Submission Error";
+        toastVariant = "destructive";
+        try {
+          const errorResult = JSON.parse(responseBodyText);
+          console.error("ContactSection onSubmit: Error response from API (JSON):", errorResult);
+          toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server.";
+          if (errorResult.details && typeof errorResult.details === 'object') {
+            // If Zod errors are returned
+             const errorMessages = Object.values(errorResult.details)
+                .flatMap((field: any) => field._errors)
+                .join(" ");
+             if (errorMessages) toastDescription += ` Details: ${errorMessages}`;
+          }
+        } catch (e) { 
+          console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
+          if (responseBodyText.toLowerCase().includes("<html")) {
+             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
+             console.error("ContactSection onSubmit: HTML Error Page Snippet from /api/contact:", responseBodyText.substring(0, 300));
+          } else {
+             toastDescription = responseBodyText.trim() || `Server error: ${response.status}. Please try again.`;
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error("ContactSection onSubmit: Network or unexpected error:", error);
+      toastTitle = "Network Error";
+      toastDescription = error.message || "Could not connect to the server. Please check your internet connection and try again.";
+      toastVariant = "destructive";
     } finally {
-      // Give some time for the browser to process the mailto link and for the user to see the toast.
-      setTimeout(() => {
-        setIsLoading(false);
-        setIsSubmittingState(false);
-      }, 1500); // Adjusted delay
+      setIsLoading(false);
+      setIsSubmittingState(false);
+      toast({
+        title: toastTitle,
+        description: toastDescription,
+        variant: toastVariant,
+        duration: toastVariant === "destructive" ? 10000 : 7000,
+      });
     }
   }
   
-  // Button should be disabled if the form is being submitted OR if the mailto link is being prepared.
   const isButtonDisabled = form.formState.isSubmitting || isSubmittingState;
 
   return (
@@ -99,14 +135,14 @@ const ContactSection = () => {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-primary animate-slideUpFadeIn opacity-0" style={{animationDelay: '0ms', animationFillMode: 'forwards'}}>Get In Touch</h2>
         <p className="text-md sm:text-lg text-muted-foreground text-center mb-10 md:mb-12 max-w-xl mx-auto animate-slideUpFadeIn opacity-0" style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
-          Have a project in mind, a question, or just want to say hi? Fill out the form below. Clicking &quot;Send Message&quot; will open your default email client.
+          Have a project in mind, a question, or just want to say hi? Fill out the form below to send me a message directly.
         </p>
         <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 animate-slideUpFadeIn opacity-0" style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Your message will be prepared for your default email application.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Your message will be sent to my inbox.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
@@ -130,7 +166,7 @@ const ContactSection = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-sm">Your Email Address (for reply)</FormLabel>
+                            <FormLabel className="text-sm">Your Email Address</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="your.email@example.com" {...field} />
                             </FormControl>
@@ -166,7 +202,7 @@ const ContactSection = () => {
                       )}
                     />
                     <Button type="submit" className={cn("w-full sm:w-auto group", "interactive-border")} disabled={isButtonDisabled}>
-                      {isButtonDisabled ? 'Preparing...' : 'Send Message via Email Client'}
+                      {isButtonDisabled ? 'Sending...' : 'Send Message'}
                       {!isButtonDisabled && <Send className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </Button>
                   </form>
