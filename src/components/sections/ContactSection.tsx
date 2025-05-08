@@ -34,7 +34,7 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { setIsLoading } = useLoading(); // Removed showLoadingForDuration as it's not used directly here
+  const { setIsLoading } = useLoading();
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
 
 
@@ -78,12 +78,14 @@ const ContactSection = () => {
             const result = JSON.parse(responseBodyText);
             console.log("ContactSection onSubmit: Success response from API:", result);
             toastTitle = "Message Sent!";
-            toastDescription = result.message || "Your message has been successfully submitted.";
+            toastDescription = result.message || "Your message has been successfully submitted and saved locally.";
             form.reset();
         } catch (e) {
             console.error("ContactSection onSubmit: API response was OK, but not valid JSON:", responseBodyText, e);
             toastTitle = "Message Sent (with warning)";
             toastDescription = "Your message was likely processed, but the server sent an unexpected confirmation. Body: " + responseBodyText.substring(0,100);
+            // Still reset form as it likely succeeded server-side if response.ok
+            form.reset();
         }
       } else {
         toastTitle = "Submission Error";
@@ -93,12 +95,12 @@ const ContactSection = () => {
           console.error("ContactSection onSubmit: Error response from API (JSON):", errorResult);
 
           if (typeof errorResult === 'object' && errorResult !== null && Object.keys(errorResult).length === 0 && errorResult.constructor === Object) {
-            toastDescription = "The server returned an empty error response. This often indicates a server-side misconfiguration (e.g., database connection string MONGODB_URI in .env.local might be missing, incorrect, or the DB server is down) or an unhandled error on the server. Please check the server console logs for more details or contact the site administrator.";
+            toastDescription = "The server returned an empty error response. This might indicate an issue with the local file storage API (e.g., permissions, file access). Please check the server console logs for more details or contact the site administrator.";
           } else {
-            toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server.";
+            toastDescription = errorResult.error || errorResult.details || errorResult.message || "An unknown error occurred on the server while trying to save the message locally.";
           }
           
-          if (errorResult.details && typeof errorResult.details === 'object' && !(typeof errorResult === 'object' && errorResult !== null && Object.keys(errorResult).length === 0 && errorResult.constructor === Object) ) {
+          if (errorResult.details && typeof errorResult.details === 'object' && !(errorResult.details.constructor === Object && Object.keys(errorResult.details).length === 0) ) {
              const errorMessages = Object.values(errorResult.details)
                 .flatMap((field: any) => field._errors || (typeof field === 'string' ? [field] : [])) 
                 .join(" ");
@@ -107,10 +109,10 @@ const ContactSection = () => {
         } catch (e) { 
           console.error("ContactSection onSubmit: API error response (not JSON). Status:", response.status, "Body:", responseBodyText, "Parsing error:", e instanceof Error ? e.message : String(e));
           if (responseBodyText.toLowerCase().includes("<html")) {
-             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself (e.g., misconfiguration, unhandled exception). Please check the server-side logs for the Next.js application for more details.`;
+             toastDescription = `The server's API route (/api/contact) returned an HTML error page (status ${response.status}) instead of a JSON response. This usually indicates a critical internal error within the API route itself. Please check the server-side logs for the Next.js application for more details.`;
              console.error("ContactSection onSubmit: HTML Error Page Snippet from /api/contact:", responseBodyText.substring(0, 300));
           } else {
-             toastDescription = responseBodyText.trim() || `Server error: ${response.status}. Please try again.`;
+             toastDescription = responseBodyText.trim() || `Server error: ${response.status}. Please try again. Failed to save message locally.`;
           }
         }
       }
@@ -138,14 +140,14 @@ const ContactSection = () => {
       <div className="container mx-auto px-4">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-primary animate-slideUpFadeIn opacity-0" style={{animationDelay: '0ms', animationFillMode: 'forwards'}}>Get In Touch</h2>
         <p className="text-md sm:text-lg text-muted-foreground text-center mb-10 md:mb-12 max-w-xl mx-auto animate-slideUpFadeIn opacity-0" style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
-          Have a project in mind, a question, or just want to say hi? Fill out the form below to send me a message directly.
+          Have a project in mind, a question, or just want to say hi? Fill out the form below to send me a message.
         </p>
         <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 animate-slideUpFadeIn opacity-0" style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Your message will be sent to my inbox.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Your message will be saved locally for review.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
@@ -265,3 +267,4 @@ const ContactSection = () => {
 };
 
 export default ContactSection;
+
