@@ -34,8 +34,9 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const ContactSection = () => {
   const { toast } = useToast();
-  const { showLoadingForDuration, setIsLoading } = useLoading(); // setIsLoading for finer control if needed
+  const { setIsLoading } = useLoading(); // Use setIsLoading for managing loading state
   const [isSubmittingState, setIsSubmittingState] = React.useState(false);
+
 
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
@@ -45,17 +46,16 @@ const ContactSection = () => {
       subject: "",
       message: "",
     },
-    mode: "onChange",
+    mode: "onChange", // Validate on change for better UX
   });
 
   const recipientEmail = "konthamjaganmohanreddy@gmail.com";
   const mailtoLinkDirect = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipientEmail}&su=Contact%20from%20Portfolio`;
 
-
   async function onSubmit(data: ContactFormValues) {
-    console.log("ContactSection onSubmit: Form submitted with data:", data);
+    console.log("ContactSection onSubmit: Preparing mailto link with data:", data);
     setIsSubmittingState(true);
-    setIsLoading(true); // Show loading spinner briefly
+    setIsLoading(true); 
 
     const { name, email, subject, message } = data;
     
@@ -70,42 +70,43 @@ const ContactSection = () => {
       toast({
         title: "Opening Email Client",
         description: "Please complete sending your message through your email application.",
-        variant: "default",
-        duration: 5000,
+        variant: "default", // 'default' is typically blue/neutral, not green for success.
+        duration: 7000, // Increased duration
       });
-      form.reset();
+      form.reset(); // Reset form fields after attempting to open mail client
     } catch (error) {
       console.error("ContactSection onSubmit: Error trying to open mailto link:", error);
       toast({
-        title: "Error",
-        description: "Could not open your email client. Please try copying the email address.",
+        title: "Error Opening Email Client",
+        description: "Could not automatically open your email client. Please manually copy the email address and send your message.",
         variant: "destructive",
-        duration: 8000,
+        duration: 10000, // Longer duration for error messages
       });
     } finally {
-      // Simulate a short delay for user feedback even if mailto opens instantly
+      // Give some time for the browser to process the mailto link and for the user to see the toast.
       setTimeout(() => {
         setIsLoading(false);
         setIsSubmittingState(false);
-      }, 1000); // Short delay
+      }, 1500); // Adjusted delay
     }
   }
   
-  const isButtonDisabled = isSubmittingState;
+  // Button should be disabled if the form is being submitted OR if the mailto link is being prepared.
+  const isButtonDisabled = form.formState.isSubmitting || isSubmittingState;
 
   return (
     <section id="contact" className="py-10 sm:py-12 md:py-16 lg:py-20">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4 text-primary animate-slideUpFadeIn opacity-0" style={{animationDelay: '0ms', animationFillMode: 'forwards'}}>Get In Touch</h2>
         <p className="text-md sm:text-lg text-muted-foreground text-center mb-10 md:mb-12 max-w-xl mx-auto animate-slideUpFadeIn opacity-0" style={{animationDelay: '200ms', animationFillMode: 'forwards'}}>
-          Have a project in mind, a question, or just want to say hi? Feel free to reach out. Your message will open in your default email client.
+          Have a project in mind, a question, or just want to say hi? Fill out the form below. Clicking &quot;Send Message&quot; will open your default email client.
         </p>
         <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           <div className="lg:col-span-2 animate-slideUpFadeIn opacity-0" style={{animationDelay: '400ms', animationFillMode: 'forwards'}}>
             <Card className="shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-xl sm:text-2xl">Send me a message</CardTitle>
-                <CardDescription className="text-sm sm:text-base">Clicking &quot;Send Message&quot; will open your email client.</CardDescription>
+                <CardDescription className="text-sm sm:text-base">Your message will be prepared for your default email application.</CardDescription>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <Form {...form}>
